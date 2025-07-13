@@ -56,16 +56,18 @@ if (isset($_SESSION['login-pelanggan'])) {
         </div>
 
         <div class="row center">
-            <?php
-            if (isset($_SESSION["login-pelanggan"])) :
-                ?>
-                <a href="status.php" class="btn-large waves-effect waves-light green" style="margin-bottom: 15px;">
-                    <i class="material-icons left">receipt</i>Lihat Status Pesanan
-                </a>
-            <?php endif; ?>
-            <button id="find-nearby-btn" class="btn-large waves-effect waves-light blue darken-3">
-                <i class="material-icons left">my_location</i>Cari Laundry Terdekat
-            </button>
+            <div class="button-container" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+                <?php
+                if (isset($_SESSION["login-pelanggan"])) :
+                    ?>
+                    <a href="status.php" class="btn-large waves-effect waves-light green">
+                        <i class="material-icons left">receipt</i>Lihat Status Pesanan
+                    </a>
+                <?php endif; ?>
+                <button id="find-nearby-btn" class="btn-large waves-effect waves-light blue darken-3">
+                    <i class="material-icons left">my_location</i>Cari Laundry Terdekat
+                </button>
+            </div>
             <p id="location-status" class="light"></p>
         </div>
 
