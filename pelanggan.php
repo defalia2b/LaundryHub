@@ -29,11 +29,10 @@ if (isset($_POST["ubah-data"])) {
         return $current_foto;
     }
 
-    // Ambil data dari form
+    // Ambil data dari form (tanpa 'kota')
     $nama = htmlspecialchars($_POST["nama"]);
     $email = htmlspecialchars($_POST["email"]);
     $telp = htmlspecialchars($_POST["telp"]);
-    $kota = htmlspecialchars($_POST["kota"]);
     $alamat = htmlspecialchars($_POST["alamat"]);
 
     // Simpan input ke session agar form tetap terisi jika validasi gagal
@@ -46,12 +45,11 @@ if (isset($_POST["ubah-data"])) {
         $current_user = mysqli_fetch_assoc($current_user_q);
         $foto = uploadFoto($current_user['foto']);
 
-        // Query UPDATE
+        // Query UPDATE (tanpa 'kota')
         $query = "UPDATE pelanggan SET
             nama = '$nama',
             email = '$email',
             telp = '$telp',
-            kota = '$kota', 
             alamat = '$alamat',
             foto = '$foto'
             WHERE id_pelanggan = $idPelanggan
@@ -143,10 +141,7 @@ unset($_SESSION['pesan_error']);
                         <input type="tel" id="telp" name="telp" value="<?= htmlspecialchars($data['telp'] ?? '') ?>">
                         <label for="telp">No Telp</label>
                     </div>
-                    <div class="input-field">
-                        <input type="text" id="kota" name="kota" value="<?= htmlspecialchars($data['kota'] ?? '') ?>">
-                        <label for="kota">Kota / Kabupaten</label>
-                    </div>
+
                     <div class="input-field">
                         <textarea class="materialize-textarea" id="alamat" name="alamat"><?= htmlspecialchars($data['alamat'] ?? '') ?></textarea>
                         <label for="alamat">Alamat Lengkap</label>

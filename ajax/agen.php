@@ -5,7 +5,7 @@ include "../connect-db.php";
 $keyword = htmlspecialchars($_GET["keyword"]);
 
 $query = "SELECT * FROM mitra WHERE 
-    kota LIKE '%$keyword%' OR
+    alamat LIKE '%$keyword%' OR 
     nama_laundry LIKE '%$keyword%'
 ";
 

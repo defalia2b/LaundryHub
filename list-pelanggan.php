@@ -33,7 +33,6 @@ if ( isset($_POST["cari"])) {
 
     $query = "SELECT * FROM pelanggan WHERE 
         nama LIKE '%$keyword%' OR
-        kota LIKE '%$keyword%' OR
         email LIKE '%$keyword%' OR
         alamat LIKE '%$keyword%'
         ORDER BY id_pelanggan DESC
@@ -118,7 +117,6 @@ if ( isset($_POST["cari"])) {
                         <th>Nama</th>
                         <th>No Telp</th>
                         <th>Email</th>
-                        <th>Kota</th>
                         <th>Alamat Lengkap</th>
                         <th>Aksi</th>
                     </tr>
@@ -130,7 +128,6 @@ if ( isset($_POST["cari"])) {
                         <td><?= $dataPelanggan["nama"] ?></td>
                         <td><?= $dataPelanggan["telp"] ?></td>
                         <td><?= $dataPelanggan["email"] ?></td>
-                        <td><?= $dataPelanggan["kota"] ?></td>
                         <td><?= $dataPelanggan["alamat"] ?></td>
                         <td><a class="btn red darken-2" href="list-pelanggan.php?hapus=<?= $dataPelanggan['id_pelanggan'] ?>" onclick="return confirm('Apakah anda yakin ingin menghapus data ?')"><i class="material-icons">delete</i></a></td>
                     </tr>

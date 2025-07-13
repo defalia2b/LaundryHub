@@ -61,7 +61,7 @@ if (count($mitra_list) > 0) {
                 </h5>
                 <p class="light">
                     <b>' . round($mitra['distance'], 1) . ' km dari Anda</b><br>
-                    ' . htmlspecialchars($mitra["alamat"]) . ', ' . htmlspecialchars($mitra["kota"]) . '
+                    ' . htmlspecialchars($mitra["alamat"]) . '
                 </p>
             </div>
         </div>

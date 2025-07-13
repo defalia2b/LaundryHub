@@ -35,7 +35,6 @@ if ( isset($_POST["cari"])) {
     $query = "SELECT * FROM mitra WHERE 
         nama_laundry LIKE '%$keyword%' OR
         nama_pemilik LIKE '%$keyword%' OR
-        kota LIKE '%$keyword%' OR
         email LIKE '%$keyword%' OR
         alamat LIKE '%$keyword%'
         ORDER BY id_mitra DESC
@@ -108,7 +107,6 @@ if ( isset($_POST["cari"])) {
                         <th>Nama Pemilik</th>
                         <th>No Telp</th>
                         <th>Email</th>
-                        <th>Kota</th>
                         <th>Alamat Lengkap</th>
                         <th>Aksi</th>
                     </tr>
@@ -121,7 +119,6 @@ if ( isset($_POST["cari"])) {
                             <td><?= $dataMitra["nama_pemilik"] ?></td>
                             <td><?= $dataMitra["telp"] ?></td>
                             <td><?= $dataMitra["email"] ?></td>
-                            <td><?= $dataMitra["kota"] ?></td>
                             <td><?= $dataMitra["alamat"] ?></td>
                             <td><a class="btn red darken-2" href="list-mitra.php?hapus=<?= $dataMitra['id_mitra'] ?>" onclick="return confirm('Apakah anda yakin ingin menghapus data ?')"><i class="material-icons">delete</i></a></td>
                         </tr>

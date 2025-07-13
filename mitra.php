@@ -10,7 +10,6 @@ $idMitra = $_SESSION["mitra"];
 // 1. PROSES PENYIMPANAN DATA (JIKA FORM DI-SUBMIT)
 if (isset($_POST["simpan"])) {
 
-    // Fungsi upload foto disederhanakan
     function uploadFoto($current_foto) {
         if (isset($_FILES["foto"]) && $_FILES["foto"]["error"] === 0) {
             $namaFile = $_FILES["foto"]["name"];
@@ -29,28 +28,25 @@ if (isset($_POST["simpan"])) {
         return $current_foto;
     }
 
-    // Ambil data dari form
+    // Ambil data dari form (tanpa 'kota')
     $namaLaundry = htmlspecialchars($_POST["namaLaundry"]);
     $namaPemilik = htmlspecialchars($_POST["namaPemilik"]);
     $email = htmlspecialchars($_POST["email"]);
     $telp = htmlspecialchars($_POST["telp"]);
-    $kota = htmlspecialchars($_POST["kota"]);
     $alamat = htmlspecialchars($_POST["alamat"]);
     $latitude = floatval($_POST["latitude"]);
     $longitude = floatval($_POST["longitude"]);
 
-    // Dapatkan data mitra saat ini untuk foto
     $current_mitra_query = mysqli_query($connect, "SELECT foto FROM mitra WHERE id_mitra = '$idMitra'");
     $current_mitra = mysqli_fetch_assoc($current_mitra_query);
     $foto_baru = uploadFoto($current_mitra['foto']);
 
-    // Query UPDATE
+    // Query UPDATE (tanpa 'kota')
     $update_query = "UPDATE mitra SET
         nama_laundry = '$namaLaundry',
         nama_pemilik = '$namaPemilik',
         email = '$email',
         telp = '$telp',
-        kota = '$kota',
         alamat = '$alamat',
         latitude = '$latitude',
         longitude = '$longitude',
@@ -75,7 +71,7 @@ $query = "SELECT * FROM mitra WHERE id_mitra = '$idMitra'";
 $result = mysqli_query($connect, $query);
 $mitra = mysqli_fetch_assoc($result);
 
-// 3. CEK APAKAH ADA 'FLASH MESSAGE' UNTUK DITAMPILKAN
+// 3. CEK 'FLASH MESSAGE' UNTUK DITAMPILKAN
 $pesan_sukses = null;
 if (isset($_SESSION['pesan_sukses'])) {
     $pesan_sukses = $_SESSION['pesan_sukses'];
@@ -117,18 +113,18 @@ if (isset($_SESSION['pesan_info'])) {
                             <div class="file-path-wrapper"><input class="file-path validate" type="text"></div>
                         </div>
 
-                        <div class="input-field"><label for="namaLaundry">Nama Laundry</label><input type="text" id="namaLaundry" name="namaLaundry" value="<?= htmlspecialchars($mitra['nama_laundry']) ?>"></div>
-                        <div class="input-field"><label for="namaPemilik">Nama Pemilik</label><input type="text" id="namaPemilik" name="namaPemilik" value="<?= htmlspecialchars($mitra['nama_pemilik']) ?>"></div>
-                        <div class="input-field"><label for="email">Email</label><input type="email" id="email" name="email" value="<?= htmlspecialchars($mitra['email']) ?>"></div>
-                        <div class="input-field"><label for="telp">No Telp</label><input type="tel" id="telp" name="telp" value="<?= htmlspecialchars($mitra['telp']) ?>"></div>
-                        <div class="input-field"><label for="kota">Kota / Kabupaten</label><input type="text" name="kota" value="<?= htmlspecialchars($mitra['kota']) ?>"></div>
-                        <div class="input-field"><label for="alamat">Alamat Lengkap</label><textarea class="materialize-textarea" name="alamat"><?= htmlspecialchars($mitra['alamat']) ?></textarea></div>
+                        <div class="input-field"><input type="text" id="namaLaundry" name="namaLaundry" value="<?= htmlspecialchars($mitra['nama_laundry']) ?>"><label for="namaLaundry">Nama Laundry</label></div>
+                        <div class="input-field"><input type="text" id="namaPemilik" name="namaPemilik" value="<?= htmlspecialchars($mitra['nama_pemilik']) ?>"><label for="namaPemilik">Nama Pemilik</label></div>
+                        <div class="input-field"><input type="email" id="email" name="email" value="<?= htmlspecialchars($mitra['email']) ?>"><label for="email">Email</label></div>
+                        <div class="input-field"><input type="tel" id="telp" name="telp" value="<?= htmlspecialchars($mitra['telp']) ?>"><label for="telp">No Telp</label></div>
+
+                        <div class="input-field"><textarea class="materialize-textarea" name="alamat" id="alamat"><?= htmlspecialchars($mitra['alamat']) ?></textarea><label for="alamat">Alamat Lengkap</label></div>
 
                         <label>Klik di Peta untuk Memperbarui Lokasi Anda</label>
                         <div id="map"></div>
 
-                        <div class="input-field"><label for="latitude">Latitude</label><input type="text" id="latitude" name="latitude" value="<?= $mitra['latitude'] ?>" readonly></div>
-                        <div class="input-field"><label for="longitude">Longitude</label><input type="text" id="longitude" name="longitude" value="<?= $mitra['longitude'] ?>" readonly></div>
+                        <div class="input-field"><input type="text" id="latitude" name="latitude" value="<?= $mitra['latitude'] ?>" readonly><label for="latitude">Latitude</label></div>
+                        <div class="input-field"><input type="text" id="longitude" name="longitude" value="<?= $mitra['longitude'] ?>" readonly><label for="longitude">Longitude</label></div>
 
                         <div class="center" style="margin-top: 20px;">
                             <button class="btn-large waves-effect waves-light blue darken-2" type="submit" name="simpan">Simpan Perubahan</button>
@@ -149,7 +145,6 @@ if (isset($_SESSION['pesan_info'])) {
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // ... (Kode JavaScript untuk Leaflet map tetap sama) ...
         var currentLat = <?= $mitra['latitude'] ?: '-6.200000' ?>;
         var currentLng = <?= $mitra['longitude'] ?: '106.816666' ?>;
         var map = L.map('map').setView([currentLat, currentLng], 15);
@@ -161,19 +156,30 @@ if (isset($_SESSION['pesan_info'])) {
         var marker = L.marker([currentLat, currentLng]).addTo(map);
 
         map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lon = e.latlng.lng;
+
             if (marker) {
-                map.removeLayer(marker);
+                marker.setLatLng(e.latlng);
             }
-            marker = L.marker(e.latlng).addTo(map);
-            document.getElementById('latitude').value = e.latlng.lat.toFixed(8);
-            document.getElementById('longitude').value = e.latlng.lng.toFixed(8);
-            M.updateTextFields();
+            document.getElementById('latitude').value = lat.toFixed(8);
+            document.getElementById('longitude').value = lon.toFixed(8);
+
+            // Fetch alamat baru saat peta diklik
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.display_name) {
+                        document.getElementById('alamat').value = data.display_name;
+                    }
+                    M.updateTextFields();
+                });
         });
     });
 </script>
 
 <?php
-// 4. TAMPILKAN POPUP JIKA ADA PESAN DARI SESSION
+// TAMPILKAN POPUP JIKA ADA PESAN DARI SESSION
 if ($pesan_sukses) {
     echo "<script>Swal.fire('Berhasil', '" . addslashes($pesan_sukses) . "', 'success');</script>";
 }

@@ -43,7 +43,9 @@ $mitra = mysqli_fetch_assoc($query);
             <div class="col s12 m8">
                 <h3><?= htmlspecialchars($mitra["nama_laundry"]) ?></h3>
                 <p><i class="material-icons tiny">person</i> Pemilik: <?= htmlspecialchars($mitra["nama_pemilik"]) ?></p>
-                <p><i class="material-icons tiny">place</i> Alamat: <?= htmlspecialchars($mitra["alamat"] . ", " . $mitra["kota"]) ?></p>
+
+                <p><i class="material-icons tiny">place</i> Alamat: <?= htmlspecialchars($mitra["alamat"]) ?></p>
+
                 <p><i class="material-icons tiny">phone</i> No. HP: <?= htmlspecialchars($mitra["telp"]) ?></p>
             </div>
         </div>
