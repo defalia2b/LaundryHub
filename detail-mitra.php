@@ -15,6 +15,15 @@ if (mysqli_num_rows($query) === 0) {
     exit;
 }
 $mitra = mysqli_fetch_assoc($query);
+
+// --- START: Perbaikan Query dan Logika Rating ---
+// Asumsi rating di DB adalah skala 1-10, kita ubah ke skala 5
+$rating_query = mysqli_query($connect, "SELECT AVG(rating / 2) as average_rating, COUNT(id_transaksi) as total_reviews FROM transaksi WHERE id_mitra = '$idMitra' AND rating IS NOT NULL AND rating > 0");
+$rating_data = mysqli_fetch_assoc($rating_query);
+// Pembulatan 1 desimal
+$average_rating = round($rating_data['average_rating'] ?? 0, 1);
+$total_reviews = $rating_data['total_reviews'] ?? 0;
+// --- END: Perbaikan Query dan Logika Rating ---
 ?>
 
 <!DOCTYPE html>
@@ -36,7 +45,29 @@ $mitra = mysqli_fetch_assoc($query);
                     <img src="img/mitra/<?= htmlspecialchars($mitra['foto']) ?>" class="responsive-img" alt="Foto <?= htmlspecialchars($mitra['nama_laundry']) ?>" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-blue);">
                 </div>
                 <div class="col s12 m8">
-                    <h3 style="margin-top: 10px;"><?= htmlspecialchars($mitra["nama_laundry"]) ?></h3>
+                    <h3 style="margin-top: 10px; margin-bottom: 5px;"><?= htmlspecialchars($mitra["nama_laundry"]) ?></h3>
+
+                    <div class="star-rating-display" style="margin-bottom: 15px;">
+                        <?php
+                        $full_stars = floor($average_rating);
+                        $half_star = ($average_rating - $full_stars) >= 0.5;
+                        $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
+
+                        // Tampilkan bintang penuh
+                        for ($i = 0; $i < $full_stars; $i++) {
+                            echo '<i class="material-icons">star</i>';
+                        }
+                        // Tampilkan bintang setengah
+                        if ($half_star) {
+                            echo '<i class="material-icons">star_half</i>';
+                        }
+                        // Tampilkan bintang kosong
+                        for ($i = 0; $i < $empty_stars; $i++) {
+                            echo '<i class="material-icons">star_border</i>';
+                        }
+                        ?>
+                        <span style="vertical-align: top; margin-left: 10px; font-weight: 500; font-size: 1.1rem;"><?= $average_rating ?> dari <?= $total_reviews ?> ulasan</span>
+                    </div>
                     <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">person</i> Pemilik: <?= htmlspecialchars($mitra["nama_pemilik"]) ?></p>
                     <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">phone</i> No. HP: <?= htmlspecialchars($mitra["telp"]) ?></p>
                     <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">place</i> Alamat: <?= htmlspecialchars($mitra["alamat"]) ?></p>
@@ -96,17 +127,19 @@ $mitra = mysqli_fetch_assoc($query);
                                 <strong style="color: var(--dark-navy); font-size: 1.1rem;"><?= htmlspecialchars($ulasan['nama_pelanggan']) ?></strong>
                                 <div class="star-rating-display" style="margin-left: 10px;">
                                     <?php
-                                    $rating = $ulasan['rating'] ?? 0;
-                                    for ($i = 1; $i <= 5; $i++):
-                                        if ($i <= $rating) {
-                                            echo '&#9733;'; // Bintang terisi
-                                        } else {
-                                            echo '<span class="muted-star">&#9733;</span>'; // Bintang kosong
-                                        }
-                                    endfor;
+                                    // Mengubah rating ulasan per item ke skala 5
+                                    $item_rating = ($ulasan['rating'] ?? 0) / 2;
+                                    $item_full = floor($item_rating);
+                                    $item_half = ($item_rating - $item_full) >= 0.5;
+                                    $item_empty = 5 - $item_full - ($item_half ? 1 : 0);
+
+                                    for ($i = 0; $i < $item_full; $i++) echo '<i class="material-icons tiny">star</i>';
+                                    if ($item_half) echo '<i class="material-icons tiny">star_half</i>';
+                                    for ($i = 0; $i < $item_empty; $i++) echo '<i class="material-icons tiny">star_border</i>';
                                     ?>
                                 </div>
-                                <p class="light" style="margin-top: 5px;"><?= htmlspecialchars($ulasan['komentar']) ?></p>
+                                <p class="light" style="margin-top: 5px; font-style: italic;">"<?= htmlspecialchars($ulasan['komentar']) ?>"</p>
+                                <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">Diulas pada: <?= date('d M Y', strtotime($ulasan['tgl_transaksi'])) ?></p>
                             </div>
                         </div>
                     </div>
