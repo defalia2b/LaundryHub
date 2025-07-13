@@ -28,7 +28,6 @@ if (isset($_POST["simpan"])) {
         return $current_foto;
     }
 
-    // Ambil data dari form (tanpa 'kota')
     $namaLaundry = htmlspecialchars($_POST["namaLaundry"]);
     $namaPemilik = htmlspecialchars($_POST["namaPemilik"]);
     $email = htmlspecialchars($_POST["email"]);
@@ -41,7 +40,6 @@ if (isset($_POST["simpan"])) {
     $current_mitra = mysqli_fetch_assoc($current_mitra_query);
     $foto_baru = uploadFoto($current_mitra['foto']);
 
-    // Query UPDATE (tanpa 'kota')
     $update_query = "UPDATE mitra SET
         nama_laundry = '$namaLaundry',
         nama_pemilik = '$namaPemilik',
@@ -92,7 +90,15 @@ if (isset($_SESSION['pesan_info'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include 'headtags.html'; ?>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <style> #map { height: 300px; } </style>
+    <style>
+        #map { height: 300px; cursor: pointer; }
+
+        /* --- CSS BARU UNTUK EFEK GREYED OUT --- */
+        input[readonly], textarea[readonly] {
+            color: #9e9e9e !important; /* Warna teks abu-abu */
+            border-bottom: 1px dotted #9e9e9e !important; /* Garis bawah putus-putus */
+        }
+    </style>
     <title>Profil Mitra - <?= htmlspecialchars($mitra['nama_laundry']) ?></title>
 </head>
 <body>
@@ -118,9 +124,12 @@ if (isset($_SESSION['pesan_info'])) {
                         <div class="input-field"><input type="email" id="email" name="email" value="<?= htmlspecialchars($mitra['email']) ?>"><label for="email">Email</label></div>
                         <div class="input-field"><input type="tel" id="telp" name="telp" value="<?= htmlspecialchars($mitra['telp']) ?>"><label for="telp">No Telp</label></div>
 
-                        <div class="input-field"><textarea class="materialize-textarea" name="alamat" id="alamat"><?= htmlspecialchars($mitra['alamat']) ?></textarea><label for="alamat">Alamat Lengkap</label></div>
+                        <div class="input-field">
+                            <textarea class="materialize-textarea" name="alamat" id="alamat" readonly><?= htmlspecialchars($mitra['alamat']) ?></textarea>
+                            <label for="alamat">Alamat Lengkap (Ubah via Peta)</label>
+                        </div>
 
-                        <label>Klik di Peta untuk Memperbarui Lokasi Anda</label>
+                        <label>Klik di Peta untuk Memperbarui Lokasi & Alamat Anda</label>
                         <div id="map"></div>
 
                         <div class="input-field"><input type="text" id="latitude" name="latitude" value="<?= $mitra['latitude'] ?>" readonly><label for="latitude">Latitude</label></div>
@@ -165,7 +174,6 @@ if (isset($_SESSION['pesan_info'])) {
             document.getElementById('latitude').value = lat.toFixed(8);
             document.getElementById('longitude').value = lon.toFixed(8);
 
-            // Fetch alamat baru saat peta diklik
             fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
                 .then(res => res.json())
                 .then(data => {
@@ -175,11 +183,12 @@ if (isset($_SESSION['pesan_info'])) {
                     M.updateTextFields();
                 });
         });
+
+        M.updateTextFields();
     });
 </script>
 
 <?php
-// TAMPILKAN POPUP JIKA ADA PESAN DARI SESSION
 if ($pesan_sukses) {
     echo "<script>Swal.fire('Berhasil', '" . addslashes($pesan_sukses) . "', 'success');</script>";
 }
