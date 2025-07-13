@@ -44,22 +44,25 @@ if (isset($_POST["daftar"])) {
         return mysqli_affected_rows($connect);
     }
 
+// GANTI BLOK LAMA DENGAN INI
     if (registrasi($_POST) > 0) {
+        // Ambil data mitra yang baru daftar
         $email = $_POST['email'];
         $query  = "SELECT * FROM mitra WHERE email = '$email'";
         $result = mysqli_query($connect, $query);
         $mitra = mysqli_fetch_assoc($result);
 
+        // Buat session untuk mitra
         $_SESSION["mitra"] = $mitra["id_mitra"];
         $_SESSION["login-mitra"] = true;
 
-        echo "
-            <script>
-                Swal.fire('Pendaftaran Mitra Berhasil','Anda akan diarahkan untuk mengisi harga layanan.','success').then(function(){
-                    window.location = 'registrasi-mitra-harga.php';
-                });
-            </script>
-        ";
+        // "Titipkan" pesan sukses ke dalam session
+        $_SESSION['pesan_sukses'] = "Pendaftaran Mitra Berhasil! Sekarang, silakan atur harga layanan Anda.";
+
+        // Lakukan redirect menggunakan PHP, ini cara yang paling andal
+        header("Location: registrasi-mitra-harga.php");
+        exit; // Pastikan exit tetap ada SETELAH header()
+
     } else {
         echo mysqli_error($connect);
     }

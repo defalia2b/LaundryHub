@@ -4,13 +4,22 @@ session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
+$pesan_sukses = null;
+if (isset($_SESSION['pesan_sukses'])) {
+    $pesan_sukses = $_SESSION['pesan_sukses'];
+    unset($_SESSION['pesan_sukses']); // Hapus pesan setelah diambil
+}
+
 cekMitra();
 
 $idMitra = $_SESSION["mitra"];
 
-if ( isset($_POST["submit"]) ){
+// --- AWAL BAGIAN YANG PERLU DIPERBAIKI ---
+// KODE PENGGANTI
+if (isset($_POST["submit"])) {
 
-    function dataHarga($data){
+    function dataHarga($data)
+    {
         global $connect, $idMitra;
 
         $cuci = htmlspecialchars($data["cuci"]);
@@ -32,30 +41,20 @@ if ( isset($_POST["submit"]) ){
         return mysqli_affected_rows($connect);
     }
 
-    if (registrasi($_POST) > 0) {
-        // Kode untuk mengambil data mitra yang baru mendaftar
-        $email = $_POST['email'];
-        $query  = "SELECT * FROM mitra WHERE email = '$email'";
-        $result = mysqli_query($connect, $query);
-        $mitra = mysqli_fetch_assoc($result);
-
-        // Membuat session untuk mitra
-        $_SESSION["mitra"] = $mitra["id_mitra"];
-        $_SESSION["login-mitra"] = true;
-
-        // Menampilkan notifikasi sukses dan mengarahkan ke halaman pengaturan harga
+    // Panggil fungsi yang benar (dataHarga), bukan registrasi
+    if (dataHarga($_POST) > 0) {
         echo "
         <script>
-            Swal.fire('Pendaftaran Mitra Berhasil','Anda akan diarahkan untuk mengisi harga layanan.','success').then(function(){
-                window.location = 'registrasi-mitra-harga.php';
+            Swal.fire('Pendaftaran Selesai','Harga layanan Anda telah berhasil disimpan.','success').then(function(){
+                window.location = 'status.php';
             });
         </script>
-    ";
+        ";
     } else {
-        // Menampilkan error jika pendaftaran gagal
         echo mysqli_error($connect);
     }
 }
+// --- AKHIR BAGIAN YANG PERLU DIPERBAIKI ---
 
 ?>
 <!DOCTYPE html>
@@ -103,5 +102,11 @@ if ( isset($_POST["submit"]) ){
 </main>
 
 <?php include 'footer.php'; ?>
+<?php
+// Tampilkan popup jika ada pesan sukses dari session
+if ($pesan_sukses) {
+    echo "<script>Swal.fire('Berhasil!', '" . addslashes($pesan_sukses) . "', 'success');</script>";
+}
+?>
 </body>
 </html>
