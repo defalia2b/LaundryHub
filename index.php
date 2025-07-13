@@ -3,11 +3,27 @@ session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-// --- BAGIAN BARU: Ambil pesan notifikasi dari session jika ada ---
+// Ambil pesan notifikasi dari session jika ada
 $pesan_sukses = null;
 if (isset($_SESSION['pesan_sukses'])) {
     $pesan_sukses = $_SESSION['pesan_sukses'];
-    unset($_SESSION['pesan_sukses']); // Hapus pesan setelah diambil
+    unset($_SESSION['pesan_sukses']);
+}
+
+// Ambil data lokasi pelanggan jika login
+$pelanggan_lat = null;
+$pelanggan_lon = null;
+$pelanggan_alamat = null;
+if (isset($_SESSION['login-pelanggan'])) {
+    $idPelanggan = $_SESSION['pelanggan'];
+    $queryPelanggan = mysqli_query($connect, "SELECT latitude, longitude, alamat FROM pelanggan WHERE id_pelanggan = '$idPelanggan'");
+    if($dataPelanggan = mysqli_fetch_assoc($queryPelanggan)) {
+        if (!empty($dataPelanggan['latitude']) && !empty($dataPelanggan['longitude'])) {
+            $pelanggan_lat = $dataPelanggan['latitude'];
+            $pelanggan_lon = $dataPelanggan['longitude'];
+            $pelanggan_alamat = $dataPelanggan['alamat'];
+        }
+    }
 }
 ?>
 
@@ -74,49 +90,69 @@ if ($pesan_sukses) {
         const mitraContainer = document.getElementById('mitra-list-container');
         const spinner = document.getElementById('loading-spinner');
 
+        // Ambil data dari PHP
+        const savedLat = <?= json_encode($pelanggan_lat) ?>;
+        const savedLon = <?= json_encode($pelanggan_lon) ?>;
+        const savedAlamat = <?= json_encode($pelanggan_alamat) ?>;
+
         findBtn.addEventListener('click', function() {
-            if (!navigator.geolocation) {
-                statusP.textContent = 'Browser Anda tidak mendukung Geolocation.';
-                return;
-            }
-            statusP.textContent = 'Mendeteksi lokasi Anda...';
             spinner.style.display = 'block';
             mitraContainer.innerHTML = '';
-            navigator.geolocation.getCurrentPosition(success, error);
+
+            if (savedLat && savedLon && savedAlamat) {
+                // Kasus 1: Pelanggan login dengan alamat tersimpan
+                statusP.innerHTML = `Menampilkan laundry di sekitar alamat:<br><strong>${savedAlamat}</strong>`;
+                fetchNearbyLaundries(savedLat, savedLon);
+            } else {
+                // Kasus 2: Tidak login atau tidak punya alamat, pakai GPS
+                statusP.textContent = 'Mendeteksi lokasi Anda via GPS...';
+                if (!navigator.geolocation) {
+                    spinner.style.display = 'none';
+                    statusP.textContent = 'Browser Anda tidak mendukung Geolocation.';
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(showResultsFromGps, gpsError);
+            }
         });
 
-        function success(position) {
+        function showResultsFromGps(position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
 
+            // Pertama, dapatkan nama alamat dari koordinat GPS
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
                 .then(res => res.json())
                 .then(addressData => {
-                    const detailedAddress = addressData.display_name || 'Lokasi Anda';
-                    statusP.innerHTML = `Lokasi Anda saat ini:<br><strong>${detailedAddress}</strong><br>Mencari laundry di sekitar...`;
+                    const detailedAddress = addressData.display_name || 'Lokasi Terdeteksi';
+                    statusP.innerHTML = `Menampilkan laundry di sekitar alamat:<br><strong>${detailedAddress}</strong>`;
                 })
                 .catch(err => {
                     console.error('Gagal mendapatkan nama alamat:', err);
-                    statusP.textContent = 'Lokasi ditemukan! Mencari laundry di sekitar...';
+                    statusP.innerHTML = `Menampilkan hasil untuk lokasi terdeteksi...`;
                 })
                 .finally(() => {
-                    fetch(`ajax/find_nearby.php?lat=${latitude}&lon=${longitude}`)
-                        .then(response => response.text())
-                        .then(data => {
-                            spinner.style.display = 'none';
-                            mitraContainer.innerHTML = data;
-                        })
-                        .catch(err => {
-                            spinner.style.display = 'none';
-                            statusP.textContent = 'Gagal memuat data laundry.';
-                            console.error('Error:', err);
-                        });
+                    // Setelah alamat ditampilkan, baru cari data laundry
+                    fetchNearbyLaundries(latitude, longitude);
                 });
         }
 
-        function error() {
+        function fetchNearbyLaundries(latitude, longitude) {
+            fetch(`ajax/find_nearby.php?lat=${latitude}&lon=${longitude}`)
+                .then(response => response.text())
+                .then(data => {
+                    spinner.style.display = 'none';
+                    mitraContainer.innerHTML = data;
+                })
+                .catch(err => {
+                    spinner.style.display = 'none';
+                    statusP.textContent = 'Gagal memuat data laundry.';
+                    console.error('Error:', err);
+                });
+        }
+
+        function gpsError() {
             spinner.style.display = 'none';
-            statusP.textContent = 'Gagal mendapatkan lokasi. Pastikan Anda mengizinkan akses lokasi di browser Anda.';
+            statusP.textContent = 'Gagal mendapatkan lokasi GPS. Pastikan Anda mengizinkan akses lokasi.';
         }
     });
 </script>

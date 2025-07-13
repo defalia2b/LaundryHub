@@ -25,6 +25,8 @@ if (isset($_POST["registrasi"])) {
         $email = htmlspecialchars($data["email"]);
         $noTelp = htmlspecialchars($data["noTelp"]);
         $alamat = htmlspecialchars($data["alamat"]);
+        $latitude = floatval($data["latitude"]);
+        $longitude = floatval($data["longitude"]);
         $password = htmlspecialchars($data["password"]);
         $password2 = htmlspecialchars($data["password2"]);
 
@@ -38,7 +40,7 @@ if (isset($_POST["registrasi"])) {
         if (!preg_match("/^[0-9]{10,15}$/", $noTelp)) {
             return "Nomor Telepon harus berupa 10 hingga 15 digit angka.";
         }
-        if (empty($alamat)) {
+        if (empty($alamat) || empty($latitude) || empty($longitude)) {
             return "Alamat belum ditentukan. Silakan klik peta untuk mengisinya.";
         }
         if ($password !== $password2) {
@@ -50,9 +52,9 @@ if (isset($_POST["registrasi"])) {
             return "Email sudah terdaftar. Silakan gunakan email lain.";
         }
 
-        // Query INSERT tanpa 'kota'
-        $query = "INSERT INTO pelanggan (nama, email, telp, alamat, foto, password) 
-                  VALUES ('$nama', '$email', '$noTelp', '$alamat', 'default.png', '$password')";
+        // Query INSERT dengan kolom latitude & longitude
+        $query = "INSERT INTO pelanggan (nama, email, telp, alamat, latitude, longitude, foto, password) 
+                  VALUES ('$nama', '$email', '$noTelp', '$alamat', '$latitude', '$longitude', 'default.png', '$password')";
         mysqli_query($connect, $query);
         return mysqli_affected_rows($connect) > 0;
     }
@@ -121,6 +123,9 @@ if (isset($_POST["registrasi"])) {
                     <div id="map" style="margin-top: 10px;"></div>
                     <p class="light" id="map-helper-text">Klik pada peta untuk mengisi alamat Anda secara otomatis.</p>
 
+                    <input type="hidden" name="latitude" id="latitude">
+                    <input type="hidden" name="longitude" id="longitude">
+
                     <div class="input-field">
                         <textarea id="alamat" class="materialize-textarea" name="alamat" readonly></textarea>
                         <label for="alamat">Alamat Lengkap (Otomatis dari Peta)</label>
@@ -170,6 +175,9 @@ if (isset($_POST["registrasi"])) {
                 marker = L.marker(e.latlng).addTo(map);
             }
 
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lon;
+
             mapHelperText.innerText = "Mencari alamat...";
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
@@ -192,7 +200,6 @@ if (isset($_POST["registrasi"])) {
 </script>
 
 <?php
-// Script untuk menampilkan popup error jika ada
 if ($pesan_error) {
     echo "<script>Swal.fire('Registrasi Gagal', '" . addslashes($pesan_error) . "', 'error');</script>";
 }

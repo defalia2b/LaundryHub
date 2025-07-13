@@ -32,7 +32,9 @@ if (isset($_POST["ubah-data"])) {
     $nama = htmlspecialchars($_POST["nama"]);
     $email = htmlspecialchars($_POST["email"]);
     $telp = htmlspecialchars($_POST["telp"]);
-    $alamat = htmlspecialchars($_POST["alamat"]); // Alamat diambil dari form yang dikontrol peta
+    $alamat = htmlspecialchars($_POST["alamat"]);
+    $latitude = floatval($_POST["latitude"]);
+    $longitude = floatval($_POST["longitude"]);
 
     $_SESSION['form_input'] = $_POST;
 
@@ -46,6 +48,8 @@ if (isset($_POST["ubah-data"])) {
             email = '$email',
             telp = '$telp',
             alamat = '$alamat',
+            latitude = '$latitude',
+            longitude = '$longitude',
             foto = '$foto'
             WHERE id_pelanggan = $idPelanggan
         ";
@@ -68,7 +72,6 @@ if (isset($_POST["ubah-data"])) {
 // 2. AMBIL DATA DARI DATABASE
 $data_db = mysqli_query($connect, "SELECT * FROM pelanggan WHERE id_pelanggan = '$idPelanggan'");
 $data = mysqli_fetch_assoc($data_db);
-
 
 // 3. CEK 'FLASH MESSAGE' UNTUK NOTIFIKASI
 $pesan_sukses = $_SESSION['pesan_sukses'] ?? null;
@@ -133,6 +136,9 @@ unset($_SESSION['pesan_error']);
                     <label>Klik di Peta untuk Memperbarui Alamat Anda</label>
                     <div id="map" style="margin-top: 10px;"></div>
 
+                    <input type="hidden" name="latitude" id="latitude" value="<?= htmlspecialchars($data['latitude'] ?? '') ?>">
+                    <input type="hidden" name="longitude" id="longitude" value="<?= htmlspecialchars($data['longitude'] ?? '') ?>">
+
                     <div class="input-field">
                         <textarea class="materialize-textarea" id="alamat" name="alamat" readonly><?= htmlspecialchars($data['alamat'] ?? '') ?></textarea>
                         <label for="alamat">Alamat Lengkap (Ubah via Peta)</label>
@@ -154,13 +160,18 @@ unset($_SESSION['pesan_error']);
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Set peta ke lokasi default (Jakarta)
-        var map = L.map('map').setView([-6.200000, 106.816666], 13);
+        var currentLat = <?= !empty($data['latitude']) ? $data['latitude'] : '-6.200000' ?>;
+        var currentLng = <?= !empty($data['longitude']) ? $data['longitude'] : '106.816666' ?>;
+        var map = L.map('map').setView([currentLat, currentLng], 15);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
         var marker;
+        if (<?= !empty($data['latitude']) ? 'true' : 'false' ?>) {
+            marker = L.marker([currentLat, currentLng]).addTo(map);
+        }
 
         map.on('click', function(e) {
             var lat = e.latlng.lat;
@@ -172,6 +183,9 @@ unset($_SESSION['pesan_error']);
                 marker = L.marker(e.latlng).addTo(map);
             }
 
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lon;
+
             fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
                 .then(res => res.json())
                 .then(data => {
@@ -182,13 +196,11 @@ unset($_SESSION['pesan_error']);
                 });
         });
 
-        // Update tampilan label saat halaman dimuat
         M.updateTextFields();
     });
 </script>
 
 <?php
-// TAMPILKAN POPUP SESUAI PESAN DARI SESSION
 if ($pesan_sukses) {
     echo "<script>Swal.fire('Berhasil', '" . addslashes($pesan_sukses) . "', 'success');</script>";
 }
