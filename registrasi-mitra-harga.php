@@ -4,18 +4,19 @@ session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-$pesan_sukses = null;
-if (isset($_SESSION['pesan_sukses'])) {
-    $pesan_sukses = $_SESSION['pesan_sukses'];
-    unset($_SESSION['pesan_sukses']); // Hapus pesan setelah diambil
-}
-
+// Pastikan hanya mitra yang sudah login yang bisa mengakses halaman ini
 cekMitra();
 
 $idMitra = $_SESSION["mitra"];
 
-// --- AWAL BAGIAN YANG PERLU DIPERBAIKI ---
-// KODE PENGGANTI
+// 1. Cek apakah ada 'flash message' dari halaman registrasi sebelumnya untuk ditampilkan saat halaman pertama kali dibuka
+$pesan_sukses_awal = null;
+if (isset($_SESSION['pesan_sukses'])) {
+    $pesan_sukses_awal = $_SESSION['pesan_sukses'];
+    unset($_SESSION['pesan_sukses']); // Hapus pesan setelah diambil agar tidak muncul lagi
+}
+
+// 2. Proses saat form harga di-submit
 if (isset($_POST["submit"])) {
 
     function dataHarga($data)
@@ -26,35 +27,42 @@ if (isset($_POST["submit"])) {
         $setrika = htmlspecialchars($data["setrika"]);
         $komplit = htmlspecialchars($data["komplit"]);
 
-        validasiHarga($cuci);
-        validasiHarga($setrika);
-        validasiHarga($komplit);
+        // Validasi input
+        if (!validasiHarga($cuci) || !validasiHarga($setrika) || !validasiHarga($komplit)) {
+            return false; // Hentikan jika validasi gagal
+        }
 
-        $query2 = "INSERT INTO harga VALUES ('', 'cuci', '$idMitra', '$cuci')";
-        $query3 = "INSERT INTO harga VALUES ('', 'setrika', '$idMitra', '$setrika')";
-        $query4 = "INSERT INTO harga VALUES ('', 'komplit', '$idMitra', '$komplit')";
+        $query_cuci = "INSERT INTO harga (jenis, id_mitra, harga) VALUES ('cuci', '$idMitra', '$cuci')";
+        $query_setrika = "INSERT INTO harga (jenis, id_mitra, harga) VALUES ('setrika', '$idMitra', '$setrika')";
+        $query_komplit = "INSERT INTO harga (jenis, id_mitra, harga) VALUES ('komplit', '$idMitra', '$komplit')";
 
-        mysqli_query($connect, $query2);
-        mysqli_query($connect, $query3);
-        mysqli_query($connect, $query4);
+        mysqli_query($connect, $query_cuci);
+        mysqli_query($connect, $query_setrika);
+        mysqli_query($connect, $query_komplit);
 
-        return mysqli_affected_rows($connect);
+        return mysqli_affected_rows($connect) > 0;
     }
 
-    // Panggil fungsi yang benar (dataHarga), bukan registrasi
-    if (dataHarga($_POST) > 0) {
-        echo "
-        <script>
-            Swal.fire('Pendaftaran Selesai','Harga layanan Anda telah berhasil disimpan.','success').then(function(){
-                window.location = 'status.php';
-            });
-        </script>
-        ";
+    // Panggil fungsi untuk menyimpan harga
+    if (dataHarga($_POST)) {
+        // 3. JIKA SUKSES: Simpan pesan ke session dan redirect
+        $_SESSION['pesan_sukses'] = "Pendaftaran Selesai! Harga layanan Anda telah berhasil disimpan.";
+        header("Location: status.php");
+        exit;
     } else {
-        echo mysqli_error($connect);
+        // 4. JIKA GAGAL: Simpan pesan error ke session dan redirect kembali ke halaman ini
+        $_SESSION['pesan_error'] = "Terjadi kesalahan saat menyimpan harga. " . ($_SESSION['pesan_error'] ?? '');
+        header("Location: registrasi-mitra-harga.php");
+        exit;
     }
 }
-// --- AKHIR BAGIAN YANG PERLU DIPERBAIKI ---
+
+// 5. Cek 'flash message' error jika terjadi redirect dari proses gagal di atas
+$pesan_error_submit = null;
+if (isset($_SESSION['pesan_error'])) {
+    $pesan_error_submit = $_SESSION['pesan_error'];
+    unset($_SESSION['pesan_error']);
+}
 
 ?>
 <!DOCTYPE html>
@@ -102,10 +110,16 @@ if (isset($_POST["submit"])) {
 </main>
 
 <?php include 'footer.php'; ?>
+
 <?php
-// Tampilkan popup jika ada pesan sukses dari session
-if ($pesan_sukses) {
-    echo "<script>Swal.fire('Berhasil!', '" . addslashes($pesan_sukses) . "', 'success');</script>";
+// 6. Tampilkan popup sesuai dengan pesan yang ada
+if ($pesan_sukses_awal) {
+    // Popup selamat datang saat pertama kali tiba di halaman ini
+    echo "<script>Swal.fire('Berhasil!', '" . addslashes($pesan_sukses_awal) . "', 'success');</script>";
+}
+if ($pesan_error_submit) {
+    // Popup error jika submit gagal dan halaman di-reload
+    echo "<script>Swal.fire('Gagal', '" . addslashes($pesan_error_submit) . "', 'error');</script>";
 }
 ?>
 </body>
