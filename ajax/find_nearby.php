@@ -3,7 +3,8 @@ include '../connect-db.php';
 
 // Validasi input latitude dan longitude
 if (!isset($_GET['lat']) || !isset($_GET['lon'])) {
-    die("Lokasi tidak valid.");
+    http_response_code(400); // Bad Request
+    die("Error: Lokasi tidak valid.");
 }
 
 $user_lat = floatval($_GET['lat']);
@@ -26,8 +27,13 @@ function haversine_distance($lat1, $lon1, $lat2, $lon2) {
     return $distance;
 }
 
-// Ambil semua data mitra dari database
+// Ambil semua data mitra dari database yang memiliki koordinat
 $result = mysqli_query($connect, "SELECT * FROM mitra WHERE latitude IS NOT NULL AND longitude IS NOT NULL");
+
+if (!$result) {
+    http_response_code(500); // Internal Server Error
+    die("Error: Gagal mengakses database.");
+}
 
 $mitra_list = [];
 while ($row = mysqli_fetch_assoc($result)) {
@@ -42,34 +48,44 @@ usort($mitra_list, function($a, $b) {
     return $a['distance'] <=> $b['distance'];
 });
 
-// Tampilkan hasilnya dalam format HTML
-if (count($mitra_list) > 0) {
-    echo '<h4 class="header light center">Mitra Laundry Terdekat</h4>';
-    echo '<div class="row card-panel">';
-    foreach ($mitra_list as $mitra) {
-        // Tampilkan hanya 5 mitra terdekat sebagai contoh
-        if(count($mitra_list) > 5 && $mitra['distance'] > 10){ continue; } // Optional: batasi jarak maks 10km jika terlalu banyak
+// Batasi hasil menjadi 6 teratas untuk tampilan yang lebih bersih
+$mitra_list = array_slice($mitra_list, 0, 6);
 
+// Tampilkan hasilnya dalam format HTML yang baru
+if (count($mitra_list) > 0) {
+    echo '<h4 class="header light center" style="margin-bottom: 2rem;">Mitra Laundry Terdekat</h4>';
+    echo '<div class="row">';
+    foreach ($mitra_list as $mitra) {
         echo '
         <div class="col s12 m6 l4">
-            <div class="icon-block center">
+            <div class="card">
                 <a href="detail-mitra.php?id=' . $mitra['id_mitra'] . '">
-                    <img src="img/mitra/' . $mitra['foto'] . '" class="circle responsive-img" width="50%" />
+                    <div class="card-image">
+                        <img src="img/mitra/' . htmlspecialchars($mitra['foto']) . '" alt="Foto ' . htmlspecialchars($mitra["nama_laundry"]) . '" style="height: 200px; object-fit: cover;">
+                        <span class="card-title" style="background-color: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 0 8px 0 0;">' . htmlspecialchars($mitra["nama_laundry"]) . '</span>
+                    </div>
                 </a>
-                <h5 class="center">
-                    <a href="detail-mitra.php?id=' . $mitra['id_mitra'] . '">' . htmlspecialchars($mitra["nama_laundry"]) . '</a>
-                </h5>
-                <p class="light">
-                    <b>' . round($mitra['distance'], 1) . ' km dari Anda</b><br>
-                    ' . htmlspecialchars($mitra["alamat"]) . '
-                </p>
+                <div class="card-content" style="padding: 20px;">
+                    <p class="truncate" style="color: var(--text-dark);"><i class="material-icons tiny" style="vertical-align: middle;">place</i> ' . htmlspecialchars($mitra["alamat"]) . '</p>
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <span class="light" style="font-weight: 500; color: var(--primary-blue);">
+                            <i class="material-icons tiny" style="vertical-align: middle;">near_me</i>
+                            ' . round($mitra['distance'], 1) . ' km dari Anda
+                        </span>
+                        <a href="detail-mitra.php?id=' . $mitra['id_mitra'] . '" class="btn-small waves-effect waves-light">Detail</a>
+                    </div>
+                </div>
             </div>
         </div>
         ';
     }
     echo '</div>';
 } else {
-    echo '<h5 class="header light center">Maaf, belum ada mitra laundry yang terdaftar di dekat Anda.</h5>';
+    echo '
+    <div class="center" style="padding: 40px 20px;">
+        <i class="material-icons large grey-text text-lighten-1">location_off</i>
+        <h5 class="header light">Belum Ada Mitra Ditemukan</h5>
+        <p>Maaf, kami belum menemukan mitra laundry yang terdaftar di dekat lokasi Anda saat ini.</p>
+    </div>';
 }
-
 ?>

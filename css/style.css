@@ -1,11 +1,216 @@
+/*
+ * LaundryHub Modern Stylesheet
+ * Version: 2.0
+ */
+
+/* 1. Google Font & Color Variables
+-------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-blue: #4E75FF;
+    --dark-navy: #0A1653;
+    --off-white: #FFFCFC;
+    --light-gray: #f4f5f7;
+    --text-dark: #333;
+    --text-light: #666;
+    --border-color: #e0e0e0;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
+    --border-radius: 8px;
+}
+
+/* 2. Base & Body Styles
+-------------------------------------------------- */
 body {
     display: flex;
-    flex-direction: column;
     min-height: 100vh;
+    flex-direction: column;
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--off-white);
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 main.main-content {
     flex: 1 0 auto;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+}
+
+/* 3. Typography & Links
+-------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--dark-navy);
+    font-weight: 600;
+}
+
+h1.header, h3.header {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.light {
+    font-weight: 400 !important;
+}
+
+a {
+    color: var(--primary-blue);
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--dark-navy);
+}
+
+p {
+    line-height: 1.7;
+    color: var(--text-light);
+}
+
+/* 4. Buttons
+-------------------------------------------------- */
+.btn, .btn-large, .btn-small {
+    background-color: var(--primary-blue);
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+    box-shadow: none;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: none; /* Override Materialize's uppercase */
+}
+
+.btn:hover, .btn-large:hover, .btn-small:hover {
+    background-color: var(--dark-navy);
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+.btn-flat {
+    color: var(--primary-blue);
+}
+
+.btn-flat:hover {
+    background-color: rgba(78, 117, 255, 0.1);
+}
+
+.btn.red, .btn.red-darken-2 {
+    background-color: #e74c3c !important;
+}
+.btn.red:hover, .btn.red-darken-2:hover {
+    background-color: #c0392b !important;
+}
+
+/* 5. Cards & Panels
+-------------------------------------------------- */
+.card, .card-panel {
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.card:hover, .card-panel:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-3px);
+}
+
+.card .card-content {
+    padding: 24px;
+}
+
+.card .card-title {
+    font-weight: 600;
+    color: var(--dark-navy);
+}
+
+/* 6. Forms & Inputs
+-------------------------------------------------- */
+.input-field {
+    margin-bottom: 1.5rem;
+}
+
+.input-field input[type=text]:focus + label,
+.input-field input[type=email]:focus + label,
+.input-field input[type=tel]:focus + label,
+.input-field input[type=password]:focus + label,
+.input-field input[type=number]:focus + label,
+.input-field textarea.materialize-textarea:focus + label {
+    color: var(--primary-blue);
+}
+
+.input-field input[type=text]:focus,
+.input-field input[type=email]:focus,
+.input-field input[type=tel]:focus,
+.input-field input[type=password]:focus,
+.input-field input[type=number]:focus,
+.input-field textarea.materialize-textarea:focus {
+    border-bottom: 1px solid var(--primary-blue);
+    box-shadow: 0 1px 0 0 var(--primary-blue);
+}
+
+[type="radio"]:checked+span:after, [type="radio"].with-gap:checked+span:before, [type="radio"].with-gap:checked+span:after {
+    border: 2px solid var(--primary-blue);
+}
+[type="radio"]:checked+span:after, [type="radio"].with-gap:checked+span:after {
+    background-color: var(--primary-blue);
+}
+
+/* 7. Navigation (Header & Footer)
+-------------------------------------------------- */
+nav {
+    background-color: var(--off-white) !important;
+    box-shadow: var(--shadow);
+    color: var(--dark-navy);
+}
+
+nav .brand-logo {
+    color: var(--dark-navy) !important;
+    font-weight: 700;
+}
+
+nav .brand-logo .material-icons {
+    color: var(--primary-blue);
+}
+
+nav ul a {
+    color: var(--text-dark) !important;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+nav ul a:hover {
+    color: var(--primary-blue) !important;
+    background-color: transparent !important;
+}
+
+.page-footer {
+    background-color: var(--dark-navy) !important;
+    padding-top: 40px;
+    margin-top: 2rem;
+}
+.page-footer .footer-copyright {
+    background-color: rgba(0,0,0,0.1) !important;
+}
+
+/* 8. Star Rating (Modernized)
+-------------------------------------------------- */
+.star-rating-display {
+    display: inline-block;
+    font-size: 1.2rem;
+    color: #f1c40f; /* Yellow for stars */
+}
+.star-rating-display .muted-star {
+    color: #ccc;
+}
+
+/* 9. Utility & Responsive Classes
+-------------------------------------------------- */
+.center-card {
+    max-width: 500px;
+    margin: 2rem auto;
 }
 
 .team-container {
@@ -13,4 +218,49 @@ main.main-content {
     justify-content: center;
     flex-wrap: wrap;
     gap: 1.5rem;
+}
+
+table.responsive-table {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+table.striped>tbody>tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+table th {
+    font-weight: 600;
+    color: var(--dark-navy);
+}
+
+#map {
+    height: 350px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+/* Loader for AJAX */
+.loader {
+    border: 6px solid var(--light-gray);
+    border-top: 6px solid var(--primary-blue);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1.5s linear infinite;
+    margin: 40px auto;
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media screen and (max-width: 600px) {
+    h1.header, h3.header {
+        font-size: 1.8rem;
+    }
+    .main-content {
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
 }

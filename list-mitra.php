@@ -1,154 +1,117 @@
 <?php
-
 session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-// validasi login
 cekAdmin();
 
-//konfirgurasi pagination
-$jumlahDataPerHalaman = 5;
-$query = mysqli_query($connect,"SELECT * FROM mitra");
-$jumlahData = mysqli_num_rows($query);
-//ceil() = pembulatan ke atas
+// Pagination logic remains the same
+$jumlahDataPerHalaman = 6;
+$keyword = $_POST['keyword'] ?? '';
+
+// Query untuk total data (dengan atau tanpa keyword)
+$count_query_str = "SELECT COUNT(*) as total FROM mitra";
+if (!empty($keyword)) {
+    $count_query_str .= " WHERE nama_laundry LIKE '%$keyword%' OR nama_pemilik LIKE '%$keyword%' OR email LIKE '%$keyword%' OR alamat LIKE '%$keyword%'";
+}
+$totalDataQuery = mysqli_query($connect, $count_query_str);
+$jumlahData = mysqli_fetch_assoc($totalDataQuery)['total'];
 $jumlahHalaman = ceil($jumlahData / $jumlahDataPerHalaman);
+$halamanAktif = $_GET["page"] ?? 1;
+$awalData = ($jumlahDataPerHalaman * $halamanAktif) - $jumlahDataPerHalaman;
 
-//menentukan halaman aktif
-if ( isset($_GET["page"])){
-    $halamanAktif = $_GET["page"];
-}else{
-    $halamanAktif = 1;
+// Query untuk mengambil data per halaman
+$query_str = "SELECT * FROM mitra";
+if (!empty($keyword)) {
+    $query_str .= " WHERE nama_laundry LIKE '%$keyword%' OR nama_pemilik LIKE '%$keyword%' OR email LIKE '%$keyword%' OR alamat LIKE '%$keyword%'";
 }
+$query_str .= " ORDER BY id_mitra DESC LIMIT $awalData, $jumlahDataPerHalaman";
+$mitra_list = mysqli_query($connect, $query_str);
 
-//data awal
-$awalData = ( $jumlahDataPerHalaman * $halamanAktif ) - $jumlahDataPerHalaman;
-
-//fungsi memasukkan data di db ke array
-$mitra = mysqli_query($connect,"SELECT * FROM mitra ORDER BY id_mitra DESC LIMIT $awalData, $jumlahDataPerHalaman");
-
-
-//ketika tombol cari ditekan
-if ( isset($_POST["cari"])) {
-    $keyword = htmlspecialchars($_POST["keyword"]);
-
-    $query = "SELECT * FROM mitra WHERE 
-        nama_laundry LIKE '%$keyword%' OR
-        nama_pemilik LIKE '%$keyword%' OR
-        email LIKE '%$keyword%' OR
-        alamat LIKE '%$keyword%'
-        ORDER BY id_mitra DESC
-        LIMIT $awalData, $jumlahDataPerHalaman
-        ";
-
-    $mitra = mysqli_query($connect,$query);
-
-    //konfirgurasi pagination
-    $jumlahDataPerHalaman = 3;
-    $jumlahData = mysqli_num_rows($mitra);
-    $jumlahHalaman = ceil($jumlahData / $jumlahDataPerHalaman);
-
-    if ( isset($_GET["page"])){
-        $halamanAktif = $_GET["page"];
-    }else{
-        $halamanAktif = 1;
-    }
-}
-?>
-
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <?php include "headtags.html"; ?>
-        <title>Data Mitra</title>
-    </head>
-    <body>
-
-    <?php include 'header.php'; ?>
-    <main class="main-content">
-        <h3 class="header light center">List Mitra</h3>
-        <br>
-
-
-        <form class="col s12 center" action="" method="post">
-            <div class="input-field inline">
-                <input type="text" size=40 name="keyword" placeholder="Keyword">
-                <button type="submit" class="btn waves-effect blue darken-2" name="cari"><i class="material-icons">send</i></button>
-            </div>
-        </form>
-        <div class="row">
-            <div class="col s10 offset-s1">
-
-                <ul class="pagination center">
-                    <?php if( $halamanAktif > 1 ) : ?>
-                        <li class="disabled-effect blue darken-1">
-                            <a href="?page=<?= $halamanAktif - 1; ?>"><i class="material-icons">chevron_left</i></a>
-                        </li>
-                    <?php endif; ?>
-                    <?php for( $i = 1; $i <= $jumlahHalaman; $i++ ) : ?>
-                        <?php if( $i == $halamanAktif ) : ?>
-                            <li class="active grey"><a href="?page=<?= $i; ?>"><?= $i ?></a></li>
-                        <?php else : ?>
-                            <li class="waves-effect blue darken-1"><a href="?page=<?= $i; ?>"><?= $i ?></a></li>
-                        <?php endif; ?>
-                    <?php endfor; ?>
-                    <?php if( $halamanAktif < $jumlahHalaman ) : ?>
-                        <li class="waves-effect blue darken-1">
-                            <a class="page-link" href="?page=<?= $halamanAktif + 1; ?>"><i class="material-icons">chevron_right</i></a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
-                <table cellpadding=10 border=1>
-                    <tr>
-                        <th>ID Mitra</th>
-                        <th>Nama Laundry</th>
-                        <th>Nama Pemilik</th>
-                        <th>No Telp</th>
-                        <th>Email</th>
-                        <th>Alamat Lengkap</th>
-                        <th>Aksi</th>
-                    </tr>
-
-                    <?php foreach ($mitra as $dataMitra) : ?>
-
-                        <tr>
-                            <td><?= $dataMitra["id_mitra"] ?></td>
-                            <td><?= $dataMitra["nama_laundry"] ?></td>
-                            <td><?= $dataMitra["nama_pemilik"] ?></td>
-                            <td><?= $dataMitra["telp"] ?></td>
-                            <td><?= $dataMitra["email"] ?></td>
-                            <td><?= $dataMitra["alamat"] ?></td>
-                            <td><a class="btn red darken-2" href="list-mitra.php?hapus=<?= $dataMitra['id_mitra'] ?>" onclick="return confirm('Apakah anda yakin ingin menghapus data ?')"><i class="material-icons">delete</i></a></td>
-                        </tr>
-
-                    <?php endforeach ?>
-                </table>
-            </div>
-        </div>
-
-        </div>
-    </main>
-
-    <?php include "footer.php"; ?>
-    </body>
-    </html>
-<?php
-
+// Hapus data
 if (isset($_GET["hapus"])){
-
     $idMitra = $_GET["hapus"];
-    $query = mysqli_query($connect, "DELETE FROM mitra WHERE id_mitra = '$idMitra'");
-
-    if ( mysqli_affected_rows($connect) > 0 ){
-        echo "
-            <script>
-                Swal.fire('Data Mitra Berhasil Di Hapus','','success').then(function(){
-                    window.location = 'list-mitra.php';
-                });
-            </script>
-        ";
+    mysqli_query($connect, "DELETE FROM mitra WHERE id_mitra = '$idMitra'");
+    if (mysqli_affected_rows($connect) > 0 ){
+        echo "<script>Swal.fire('Berhasil', 'Data Mitra telah dihapus', 'success').then(() => window.location = 'list-mitra.php');</script>";
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php include "headtags.html"; ?>
+    <title>Kelola Data Mitra</title>
+</head>
+<body>
+
+<?php include 'header.php'; ?>
+<main class="main-content">
+    <div class="container">
+        <h3 class="header light center">Kelola Data Mitra</h3>
+        <div class="card-panel">
+            <form class="row valign-wrapper" action="" method="post">
+                <div class="input-field col s10">
+                    <i class="material-icons prefix">search</i>
+                    <input type="text" id="keyword" name="keyword" value="<?= htmlspecialchars($keyword) ?>">
+                    <label for="keyword">Cari Mitra (Nama, Pemilik, Email, Alamat)</label>
+                </div>
+                <div class="col s2">
+                    <button type="submit" class="btn waves-effect waves-light">Cari</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="row">
+            <?php if(mysqli_num_rows($mitra_list) > 0): foreach ($mitra_list as $dataMitra) : ?>
+                <div class="col s12 m6 l4">
+                    <div class="card">
+                        <div class="card-image">
+                            <img src="img/mitra/<?= htmlspecialchars($dataMitra['foto']) ?>" style="height: 200px; object-fit: cover;">
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title activator grey-text text-darken-4"><?= htmlspecialchars($dataMitra['nama_laundry']) ?><i class="material-icons right">more_vert</i></span>
+                            <p><?= htmlspecialchars($dataMitra['nama_pemilik']) ?></p>
+                        </div>
+                        <div class="card-reveal">
+                            <span class="card-title grey-text text-darken-4">Detail Info<i class="material-icons right">close</i></span>
+                            <p><i class="material-icons tiny">email</i> <?= htmlspecialchars($dataMitra['email']) ?></p>
+                            <p><i class="material-icons tiny">phone</i> <?= htmlspecialchars($dataMitra['telp']) ?></p>
+                            <p><i class="material-icons tiny">place</i> <?= htmlspecialchars($dataMitra['alamat']) ?></p>
+                        </div>
+                        <div class="card-action">
+                            <a href="list-mitra.php?hapus=<?= $dataMitra['id_mitra'] ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus data mitra ini?')" class="red-text">Hapus Mitra</a>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; else: ?>
+                <p class="center light">Data mitra tidak ditemukan.</p>
+            <?php endif; ?>
+        </div>
+
+        <ul class="pagination center">
+            <?php if ($halamanAktif > 1): ?>
+                <li class="waves-effect"><a href="?page=<?= $halamanAktif - 1 ?>"><i class="material-icons">chevron_left</i></a></li>
+            <?php else: ?>
+                <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+            <?php endif; ?>
+
+            <?php for ($i = 1; $i <= $jumlahHalaman; $i++): ?>
+                <li class="<?= ($i == $halamanAktif) ? 'active' : 'waves-effect' ?>" style="<?= ($i == $halamanAktif) ? 'background-color: var(--primary-blue);' : '' ?>">
+                    <a href="?page=<?= $i ?>"><?= $i ?></a>
+                </li>
+            <?php endfor; ?>
+
+            <?php if ($halamanAktif < $jumlahHalaman): ?>
+                <li class="waves-effect"><a href="?page=<?= $halamanAktif + 1 ?>"><i class="material-icons">chevron_right</i></a></li>
+            <?php else: ?>
+                <li class="disabled"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+            <?php endif; ?>
+        </ul>
+    </div>
+</main>
+<?php include "footer.php"; ?>
+</body>
+</html>

@@ -1,36 +1,28 @@
 <?php
-
 session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-// Pastikan hanya mitra yang sudah login yang bisa mengakses halaman ini
 cekMitra();
-
 $idMitra = $_SESSION["mitra"];
 
-// 1. Cek apakah ada 'flash message' dari halaman registrasi sebelumnya untuk ditampilkan saat halaman pertama kali dibuka
-$pesan_sukses_awal = null;
-if (isset($_SESSION['pesan_sukses'])) {
-    $pesan_sukses_awal = $_SESSION['pesan_sukses'];
-    unset($_SESSION['pesan_sukses']); // Hapus pesan setelah diambil agar tidak muncul lagi
-}
+$pesan_sukses_awal = $_SESSION['pesan_sukses'] ?? null;
+unset($_SESSION['pesan_sukses']);
 
-// 2. Proses saat form harga di-submit
 if (isset($_POST["submit"])) {
-
-    function dataHarga($data)
-    {
+    function dataHarga($data) {
         global $connect, $idMitra;
-
+        // ... (Fungsi backend dan validasi tidak diubah)
         $cuci = htmlspecialchars($data["cuci"]);
         $setrika = htmlspecialchars($data["setrika"]);
         $komplit = htmlspecialchars($data["komplit"]);
 
-        // Validasi input
         if (!validasiHarga($cuci) || !validasiHarga($setrika) || !validasiHarga($komplit)) {
-            return false; // Hentikan jika validasi gagal
+            return false;
         }
+
+        // Hapus harga lama jika ada, untuk menghindari duplikasi
+        mysqli_query($connect, "DELETE FROM harga WHERE id_mitra = '$idMitra'");
 
         $query_cuci = "INSERT INTO harga (jenis, id_mitra, harga) VALUES ('cuci', '$idMitra', '$cuci')";
         $query_setrika = "INSERT INTO harga (jenis, id_mitra, harga) VALUES ('setrika', '$idMitra', '$setrika')";
@@ -43,26 +35,19 @@ if (isset($_POST["submit"])) {
         return mysqli_affected_rows($connect) > 0;
     }
 
-    // Panggil fungsi untuk menyimpan harga
     if (dataHarga($_POST)) {
-        // 3. JIKA SUKSES: Simpan pesan ke session dan redirect
         $_SESSION['pesan_sukses'] = "Pendaftaran Selesai! Harga layanan Anda telah berhasil disimpan.";
         header("Location: status.php");
         exit;
     } else {
-        // 4. JIKA GAGAL: Simpan pesan error ke session dan redirect kembali ke halaman ini
         $_SESSION['pesan_error'] = "Terjadi kesalahan saat menyimpan harga. " . ($_SESSION['pesan_error'] ?? '');
         header("Location: registrasi-mitra-harga.php");
         exit;
     }
 }
 
-// 5. Cek 'flash message' error jika terjadi redirect dari proses gagal di atas
-$pesan_error_submit = null;
-if (isset($_SESSION['pesan_error'])) {
-    $pesan_error_submit = $_SESSION['pesan_error'];
-    unset($_SESSION['pesan_error']);
-}
+$pesan_error_submit = $_SESSION['pesan_error'] ?? null;
+unset($_SESSION['pesan_error']);
 
 ?>
 <!DOCTYPE html>
@@ -71,39 +56,39 @@ if (isset($_SESSION['pesan_error'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include "headtags.html"; ?>
-    <title>Langkah 2: Atur Harga Layanan</title>
+    <title>Langkah 2: Atur Harga Layanan - LaundryHub</title>
 </head>
 <body>
 
 <?php include 'header.php' ?>
 <main class="main-content">
-    <div class="row">
-        <div class="col s6 offset-s3">
-            <h3 class="header light center">Atur Harga Layanan Anda (per Kg)</h3>
-            <div class="card-panel">
-                <form action="" method="post">
-                    <div class="input-field inline">
-                        <ul>
-                            <li>
-                                <label for="cuci">Cuci Saja (Rp)</label>
-                                <input type="number" name="cuci" value="0" required>
-                            </li>
-                            <li>
-                                <label for="setrika">Setrika Saja (Rp)</label>
-                                <input type="number" name="setrika" value="0" required>
-                            </li>
-                            <li>
-                                <label for="komplit">Cuci + Setrika (Rp)</label>
-                                <input type="number" name="komplit" value="0" required>
-                            </li>
-                            <li>
-                                <div class="center">
-                                    <button class="btn-large blue darken-2" type="submit" name="submit">Selesaikan Pendaftaran</button>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </form>
+    <div class="container">
+        <div class="row">
+            <div class="col s12 m8 l6 offset-m2 offset-l3">
+                <div class="card-panel center-card">
+                    <h4 class="header light center">Atur Harga Layanan</h4>
+                    <p class="center light">Langkah 2: Masukkan harga per Kg untuk setiap jenis layanan yang Anda tawarkan.</p>
+                    <form action="" method="post">
+                        <div class="input-field">
+                            <i class="material-icons prefix">local_laundry_service</i>
+                            <input type="number" name="cuci" id="cuci" value="0" required min="0">
+                            <label for="cuci">Harga Cuci Kering (per Kg)</label>
+                        </div>
+                        <div class="input-field">
+                            <i class="material-icons prefix">iron</i>
+                            <input type="number" name="setrika" id="setrika" value="0" required min="0">
+                            <label for="setrika">Harga Setrika Saja (per Kg)</label>
+                        </div>
+                        <div class="input-field">
+                            <i class="material-icons prefix">check_circle</i>
+                            <input type="number" name="komplit" id="komplit" value="0" required min="0">
+                            <label for="komplit">Harga Cuci + Setrika (per Kg)</label>
+                        </div>
+                        <div class="center" style="margin-top: 30px;">
+                            <button class="btn-large waves-effect waves-light" type="submit" name="submit" style="width: 100%;">Selesaikan Pendaftaran</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -112,13 +97,10 @@ if (isset($_SESSION['pesan_error'])) {
 <?php include 'footer.php'; ?>
 
 <?php
-// 6. Tampilkan popup sesuai dengan pesan yang ada
 if ($pesan_sukses_awal) {
-    // Popup selamat datang saat pertama kali tiba di halaman ini
     echo "<script>Swal.fire('Berhasil!', '" . addslashes($pesan_sukses_awal) . "', 'success');</script>";
 }
 if ($pesan_error_submit) {
-    // Popup error jika submit gagal dan halaman di-reload
     echo "<script>Swal.fire('Gagal', '" . addslashes($pesan_error_submit) . "', 'error');</script>";
 }
 ?>

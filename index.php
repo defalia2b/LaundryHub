@@ -34,45 +34,41 @@ if (isset($_SESSION['login-pelanggan'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LaundryHub - Temukan Laundry Terbaik di Sekitarmu</title>
     <?php include 'headtags.html' ?>
-    <style>
-        .loader {
-            border: 8px solid #f3f3f3; border-radius: 50%;
-            border-top: 8px solid #3498db; width: 60px; height: 60px;
-            animation: spin 2s linear infinite; margin: 20px auto; display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
 <body>
 
 <?php include 'header.php'; ?>
 
 <main class="main-content">
-    <div class="container">
-        <br>
-        <h1 class="header center orange-text"><img src="img/laundryhub_logo_transparent.png" width="70%" alt="LaundryHub Banner"></h1>
-        <div class="row center">
-            <h5 class="header col s12 light">Solusi laundry praktis, langsung dari mitra di dekat Anda.</h5>
-        </div>
-
-        <div class="row center">
-            <div class="button-container" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
-                <?php
-                if (isset($_SESSION["login-pelanggan"])) :
-                    ?>
-                    <a href="status.php" class="btn-large waves-effect waves-light green">
-                        <i class="material-icons left">receipt</i>Lihat Status Pesanan
-                    </a>
-                <?php endif; ?>
-                <button id="find-nearby-btn" class="btn-large waves-effect waves-light blue darken-3">
-                    <i class="material-icons left">my_location</i>Cari Laundry Terdekat
-                </button>
+    <section class="section no-pad-bot" id="index-banner">
+        <div class="container">
+            <br><br>
+            <h1 class="header center" style="color: var(--dark-navy);"><img src="img/laundryhub_logo_transparent.png" style="max-width: 350px;" alt="LaundryHub Logo"></h1>
+            <div class="row center">
+                <h5 class="header col s12 light" style="color: var(--text-light);">Solusi laundry praktis, langsung dari mitra di dekat Anda.</h5>
             </div>
-            <p id="location-status" class="light"></p>
+            <div class="row center">
+                <div class="button-container" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+                    <?php if (isset($_SESSION["login-pelanggan"])) : ?>
+                        <a href="status.php" class="btn-large waves-effect waves-light" style="background-color: #2ecc71;">
+                            <i class="material-icons left">receipt</i>Lihat Status Pesanan
+                        </a>
+                    <?php endif; ?>
+                    <button id="find-nearby-btn" class="btn-large waves-effect waves-light">
+                        <i class="material-icons left">my_location</i>Cari Laundry Terdekat
+                    </button>
+                </div>
+                <p id="location-status" class="light col s12"></p>
+            </div>
+            <br><br>
         </div>
+    </section>
 
-        <div id="mitra-list-container">
-            <div class="loader" id="loading-spinner"></div>
+    <div class="container">
+        <div class="section">
+            <div id="mitra-list-container">
+                <div class="loader" id="loading-spinner"></div>
+            </div>
         </div>
     </div>
 </main>
@@ -80,6 +76,7 @@ if (isset($_SESSION['login-pelanggan'])) {
 <?php include "footer.php" ?>
 
 <?php
+// Tampilkan notifikasi jika ada
 if ($pesan_sukses) {
     echo "<script>Swal.fire('Berhasil!', '" . addslashes($pesan_sukses) . "', 'success');</script>";
 }
@@ -99,11 +96,12 @@ if ($pesan_sukses) {
 
         findBtn.addEventListener('click', function() {
             spinner.style.display = 'block';
-            mitraContainer.innerHTML = '';
+            mitraContainer.innerHTML = ''; // Hapus konten lama
+            statusP.innerHTML = ''; // Hapus status lama
 
             if (savedLat && savedLon && savedAlamat) {
                 // Kasus 1: Pelanggan login dengan alamat tersimpan
-                statusP.innerHTML = `Menampilkan laundry di sekitar alamat:<br><strong>${savedAlamat}</strong>`;
+                statusP.innerHTML = `Menampilkan laundry di sekitar alamat Anda:<br><strong>${savedAlamat}</strong>`;
                 fetchNearbyLaundries(savedLat, savedLon);
             } else {
                 // Kasus 2: Tidak login atau tidak punya alamat, pakai GPS
@@ -111,9 +109,10 @@ if ($pesan_sukses) {
                 if (!navigator.geolocation) {
                     spinner.style.display = 'none';
                     statusP.textContent = 'Browser Anda tidak mendukung Geolocation.';
+                    Swal.fire('Error', 'Browser Anda tidak mendukung Geolocation.', 'error');
                     return;
                 }
-                navigator.geolocation.getCurrentPosition(showResultsFromGps, gpsError);
+                navigator.geolocation.getCurrentPosition(showResultsFromGps, gpsError, { timeout: 10000 });
             }
         });
 
@@ -126,35 +125,49 @@ if ($pesan_sukses) {
                 .then(res => res.json())
                 .then(addressData => {
                     const detailedAddress = addressData.display_name || 'Lokasi Terdeteksi';
-                    statusP.innerHTML = `Menampilkan laundry di sekitar alamat:<br><strong>${detailedAddress}</strong>`;
+                    statusP.innerHTML = `Menampilkan laundry di sekitar:<br><strong>${detailedAddress}</strong>`;
                 })
                 .catch(err => {
                     console.error('Gagal mendapatkan nama alamat:', err);
                     statusP.innerHTML = `Menampilkan hasil untuk lokasi terdeteksi...`;
                 })
                 .finally(() => {
-                    // Setelah alamat ditampilkan, baru cari data laundry
+                    // Setelah alamat ditampilkan (atau gagal), cari data laundry
                     fetchNearbyLaundries(latitude, longitude);
                 });
         }
 
         function fetchNearbyLaundries(latitude, longitude) {
             fetch(`ajax/find_nearby.php?lat=${latitude}&lon=${longitude}`)
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
                 .then(data => {
                     spinner.style.display = 'none';
                     mitraContainer.innerHTML = data;
+                    // Inisialisasi ulang tooltip jika ada di dalam data yang di-load
+                    var elems = document.querySelectorAll('.tooltipped');
+                    M.Tooltip.init(elems);
                 })
                 .catch(err => {
                     spinner.style.display = 'none';
-                    statusP.textContent = 'Gagal memuat data laundry.';
+                    statusP.textContent = 'Gagal memuat data laundry. Silakan coba lagi.';
                     console.error('Error:', err);
+                    Swal.fire('Error', 'Gagal memuat data laundry. Silakan coba lagi.', 'error');
                 });
         }
 
-        function gpsError() {
+        function gpsError(error) {
             spinner.style.display = 'none';
-            statusP.textContent = 'Gagal mendapatkan lokasi GPS. Pastikan Anda mengizinkan akses lokasi.';
+            let errorMessage = 'Gagal mendapatkan lokasi GPS. Pastikan Anda mengizinkan akses lokasi.';
+            if (error.code === error.TIMEOUT) {
+                errorMessage = 'Waktu permintaan lokasi habis. Coba lagi.';
+            }
+            statusP.textContent = errorMessage;
+            Swal.fire('Error', errorMessage, 'error');
         }
     });
 </script>

@@ -3,17 +3,14 @@ session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-// Validasi ID Mitra dari URL
 if (!isset($_GET["id"]) || !is_numeric($_GET["id"])) {
     header("Location: index.php");
     exit;
 }
 $idMitra = $_GET["id"];
 
-// Ambil data mitra dari database
 $query = mysqli_query($connect, "SELECT * FROM mitra WHERE id_mitra = '$idMitra'");
 if (mysqli_num_rows($query) === 0) {
-    // Jika ID tidak ditemukan, kembalikan ke index
     header("Location: index.php");
     exit;
 }
@@ -31,78 +28,92 @@ $mitra = mysqli_fetch_assoc($query);
 <body>
 <?php include 'header.php'; ?>
 <main class="main-content">
-    <br><br>
-
     <div class="container">
-        <div class="row card-panel">
-            <div class="col s12 m4 center">
-                <img src="img/mitra/<?= htmlspecialchars($mitra['foto']) ?>" class="responsive-img" style="width: 200px; border-radius: 10px;" />
-                <br><br>
-                <a class="btn-large waves-effect waves-light red darken-3" href="pesan-laundry.php?id=<?= $idMitra ?>">Pesan Layanan</a>
-            </div>
-            <div class="col s12 m8">
-                <h3><?= htmlspecialchars($mitra["nama_laundry"]) ?></h3>
-                <p><i class="material-icons tiny">person</i> Pemilik: <?= htmlspecialchars($mitra["nama_pemilik"]) ?></p>
 
-                <p><i class="material-icons tiny">place</i> Alamat: <?= htmlspecialchars($mitra["alamat"]) ?></p>
-
-                <p><i class="material-icons tiny">phone</i> No. HP: <?= htmlspecialchars($mitra["telp"]) ?></p>
+        <div class="card-panel" style="margin-top: 1rem;">
+            <div class="row" style="margin-bottom: 0;">
+                <div class="col s12 m4 center-align">
+                    <img src="img/mitra/<?= htmlspecialchars($mitra['foto']) ?>" class="responsive-img" alt="Foto <?= htmlspecialchars($mitra['nama_laundry']) ?>" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-blue);">
+                </div>
+                <div class="col s12 m8">
+                    <h3 style="margin-top: 10px;"><?= htmlspecialchars($mitra["nama_laundry"]) ?></h3>
+                    <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">person</i> Pemilik: <?= htmlspecialchars($mitra["nama_pemilik"]) ?></p>
+                    <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">phone</i> No. HP: <?= htmlspecialchars($mitra["telp"]) ?></p>
+                    <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">place</i> Alamat: <?= htmlspecialchars($mitra["alamat"]) ?></p>
+                    <br>
+                    <a class="btn-large waves-effect waves-light" href="pesan-laundry.php?id=<?= $idMitra ?>">
+                        <i class="material-icons left">shopping_cart</i>Pesan Layanan Sekarang
+                    </a>
+                </div>
             </div>
         </div>
 
-        <div class="row">
+        <div class="section">
             <h4 class="header light center">Daftar Harga Layanan (per Kg)</h4>
-            <?php
-            $queryHarga = mysqli_query($connect, "SELECT * FROM harga WHERE id_mitra = '$idMitra' ORDER BY jenis");
-            if (mysqli_num_rows($queryHarga) > 0) :
-                while ($harga = mysqli_fetch_assoc($queryHarga)) :
-                    ?>
-                    <div class="col s12 m4">
-                        <div class="card-panel center-align">
-                            <i class="material-icons large blue-text text-darken-2">local_offer</i>
-                            <h5><?= ucfirst(htmlspecialchars($harga['jenis'])) ?></h5>
-                            <p class="light">Rp <?= number_format($harga['harga']) ?> / Kg</p>
-                        </div>
-                    </div>
+            <div class="row">
                 <?php
-                endwhile;
-            else :
-                echo "<p class='center'>Mitra ini belum menetapkan harga.</p>";
-            endif;
-            ?>
+                $queryHarga = mysqli_query($connect, "SELECT * FROM harga WHERE id_mitra = '$idMitra' ORDER BY FIELD(jenis, 'cuci', 'setrika', 'komplit')");
+                if (mysqli_num_rows($queryHarga) > 0) :
+                    while ($harga = mysqli_fetch_assoc($queryHarga)) :
+                        $icon = 'local_laundry_service';
+                        if ($harga['jenis'] == 'setrika') $icon = 'iron';
+                        if ($harga['jenis'] == 'komplit') $icon = 'check_circle';
+                        ?>
+                        <div class="col s12 m4">
+                            <div class="card-panel center-align hoverable">
+                                <i class="material-icons large" style="color: var(--primary-blue);"><?= $icon ?></i>
+                                <h5><?= ucfirst(htmlspecialchars($harga['jenis'])) ?></h5>
+                                <h4 class="light" style="color: var(--dark-navy); margin: 10px 0;">Rp <?= number_format($harga['harga']) ?>,-</h4>
+                                <p class="light">per Kilogram</p>
+                            </div>
+                        </div>
+                    <?php
+                    endwhile;
+                else :
+                    echo "<p class='center light'>Mitra ini belum menetapkan harga layanan.</p>";
+                endif;
+                ?>
+            </div>
         </div>
 
-        <div class="row">
+        <div class="section">
             <h4 class="header light center">Ulasan Pelanggan</h4>
             <?php
             $queryUlasan = mysqli_query($connect, "SELECT t.*, p.nama as nama_pelanggan, p.foto as foto_pelanggan 
                                                   FROM transaksi t 
                                                   JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan 
-                                                  WHERE t.id_mitra = '$idMitra' AND t.komentar != '' 
-                                                  ORDER BY t.tgl_transaksi DESC");
+                                                  WHERE t.id_mitra = '$idMitra' AND t.komentar IS NOT NULL AND t.komentar != '' 
+                                                  ORDER BY t.tgl_transaksi DESC LIMIT 5");
             if (mysqli_num_rows($queryUlasan) > 0) :
                 while ($ulasan = mysqli_fetch_assoc($queryUlasan)) :
                     ?>
-                    <div class="col s12">
-                        <div class="card-panel grey lighten-5 z-depth-1">
-                            <div class="row valign-wrapper">
-                                <div class="col s2 m1 center-align">
-                                    <img src="img/pelanggan/<?= htmlspecialchars($ulasan['foto_pelanggan']) ?>" alt="" class="circle responsive-img">
+                    <div class="card-panel" style="margin-bottom: 1rem;">
+                        <div class="row valign-wrapper" style="margin-bottom: 0;">
+                            <div class="col s3 m2 l1 center-align">
+                                <img src="img/pelanggan/<?= htmlspecialchars($ulasan['foto_pelanggan']) ?>" alt="Foto Pelanggan" class="circle responsive-img">
+                            </div>
+                            <div class="col s9 m10 l11">
+                                <strong style="color: var(--dark-navy); font-size: 1.1rem;"><?= htmlspecialchars($ulasan['nama_pelanggan']) ?></strong>
+                                <div class="star-rating-display" style="margin-left: 10px;">
+                                    <?php
+                                    $rating = $ulasan['rating'] ?? 0;
+                                    for ($i = 1; $i <= 5; $i++):
+                                        if ($i <= $rating) {
+                                            echo '&#9733;'; // Bintang terisi
+                                        } else {
+                                            echo '<span class="muted-star">&#9733;</span>'; // Bintang kosong
+                                        }
+                                    endfor;
+                                    ?>
                                 </div>
-                                <div class="col s10 m11">
-                                    <strong><?= htmlspecialchars($ulasan['nama_pelanggan']) ?></strong>
-                                    <p>Rating: <?= $ulasan['rating'] ? str_repeat('&#9733;', $ulasan['rating']) : 'N/A' ?></p>
-                                    <p class="black-text">
-                                        <?= htmlspecialchars($ulasan['komentar']) ?>
-                                    </p>
-                                </div>
+                                <p class="light" style="margin-top: 5px;"><?= htmlspecialchars($ulasan['komentar']) ?></p>
                             </div>
                         </div>
                     </div>
                 <?php
                 endwhile;
             else :
-                echo "<p class='center'>Belum ada ulasan untuk mitra ini.</p>";
+                echo "<p class='center light'>Belum ada ulasan untuk mitra ini.</p>";
             endif;
             ?>
         </div>

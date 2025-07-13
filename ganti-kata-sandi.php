@@ -1,101 +1,65 @@
 <?php
-
 session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-// sesuaikan dengan jenis login
-if((isset($_SESSION["login-admin"]) && isset($_SESSION["admin"]))){
-    $login = "Admin";
-    $idAdmin = $_SESSION["admin"];
-}else if( (isset($_SESSION["login-mitra"]) && isset($_SESSION["mitra"]))){
-    $idMitra = $_SESSION["mitra"];
-    $login = "Mitra";
-}else if ((isset($_SESSION["login-pelanggan"]) && isset($_SESSION["pelanggan"]))){
-    $idPelanggan = $_SESSION["pelanggan"];
-    $login = "Pelanggan";
-}else {
-    echo "
-        <script>
-            document.location.href = 'index.php';
-        </script>
-    ";
+// Menentukan siapa yang login
+$login_type = '';
+$user_id = 0;
+$redirect_page = 'login.php';
+
+if (isset($_SESSION["login-admin"])) {
+    $login_type = "Admin";
+    $user_id = $_SESSION["admin"];
+    $redirect_page = 'admin.php';
+} elseif (isset($_SESSION["login-mitra"])) {
+    $login_type = "Mitra";
+    $user_id = $_SESSION["mitra"];
+    $redirect_page = 'mitra.php';
+} elseif (isset($_SESSION["login-pelanggan"])) {
+    $login_type = "Pelanggan";
+    $user_id = $_SESSION["pelanggan"];
+    $redirect_page = 'pelanggan.php';
+} else {
+    header("Location: login.php");
     exit;
 }
 
-// ubah sandi
+$error_message = '';
+$success_message = '';
+
 if (isset($_POST["gantiPassword"])){
     $passwordLama = htmlspecialchars($_POST["passwordLama"]);
-    $password = htmlspecialchars($_POST["password"]);
-    $repassword = htmlspecialchars($_POST["repassword"]);
+    $passwordBaru = htmlspecialchars($_POST["password"]);
+    $konfirmasiPassword = htmlspecialchars($_POST["repassword"]);
 
-    $tabel = '';
-    $id_field = '';
-    $id_value = 0;
+    $tabel = strtolower($login_type);
+    $id_field = 'id_' . $tabel;
 
-    if ($login == 'Admin'){
-        $tabel = 'admin';
-        $id_field = 'id_admin';
-        $id_value = $idAdmin;
-    } else if ($login == "Mitra"){
-        $tabel = 'mitra';
-        $id_field = 'id_mitra';
-        $id_value = $idMitra;
-    } else if ($login == "Pelanggan"){
-        $tabel = 'pelanggan';
-        $id_field = 'id_pelanggan';
-        $id_value = $idPelanggan;
-    }
+    $data_query = mysqli_query($connect, "SELECT password FROM $tabel WHERE $id_field = '$user_id'");
+    $data_user = mysqli_fetch_assoc($data_query);
 
-    // Ambil data user dari database
-    $data = mysqli_query($connect, "SELECT * FROM $tabel WHERE $id_field = $id_value");
-    $data = mysqli_fetch_assoc($data);
-
-    // 1. Cek apakah password lama sesuai (menggunakan perbandingan biasa)
-    if ($passwordLama !== $data["password"]) {
-        echo "
-            <script>   
-                Swal.fire('Gagal','Password Lama Salah','error').then(function() {
-                    window.location = 'ganti-kata-sandi.php';
-                });
-            </script>
-        ";
-        exit;
-    }
-
-    // 2. Cek apakah password baru dan konfirmasinya sama
-    if ($password !== $repassword) {
-        echo "
-            <script>   
-                Swal.fire('Gagal','Konfirmasi password baru tidak sama','error').then(function() {
-                    window.location = 'ganti-kata-sandi.php';
-                });
-            </script>
-        ";
-        exit;
-    }
-
-    // 3. Update password baru ke database (sebagai plaintext)
-    $query = mysqli_query($connect, "UPDATE $tabel SET password = '$password' WHERE $id_field = $id_value");
-
-    if (mysqli_affected_rows($connect) > 0) {
-        echo "
-            <script>   
-                Swal.fire('Berhasil','Password berhasil diganti','success').then(function() {
-                    window.location = 'ganti-kata-sandi.php';
-                });
-            </script>
-        ";
+    if ($passwordLama !== $data_user["password"]) {
+        $error_message = 'Password lama yang Anda masukkan salah.';
+    } elseif (strlen($passwordBaru) < 6) {
+        $error_message = 'Password baru minimal harus 6 karakter.';
+    } elseif ($passwordBaru !== $konfirmasiPassword) {
+        $error_message = 'Konfirmasi password baru tidak cocok.';
     } else {
-        echo "
-            <script>   
-                Swal.fire('Info','Tidak ada perubahan pada password','info');
-            </script>
-        ";
+        $update_query = mysqli_query($connect, "UPDATE $tabel SET password = '$passwordBaru' WHERE $id_field = '$user_id'");
+        if (mysqli_affected_rows($connect) > 0) {
+            $success_message = 'Password berhasil diganti! Anda akan diarahkan dalam beberapa detik.';
+            echo "<script>
+                    setTimeout(function() {
+                        window.location.href = '$redirect_page';
+                    }, 2000);
+                  </script>";
+        } else {
+            $error_message = 'Tidak ada perubahan pada password atau terjadi kesalahan.';
+        }
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,18 +71,39 @@ if (isset($_POST["gantiPassword"])){
 <body>
 <?php include 'header.php'; ?>
 <main class="main-content">
-    <h3 class="header col s24 light center">Ganti Kata Sandi</h3>
-    <form action="" method="POST" class="col s18 center">
-        <div class="input-field inline">
-            <input type="password" name="passwordLama" placeholder="Password Lama" required>
-            <input type="password" name="password" placeholder="Password Baru" required>
-            <input type="password" name="repassword" placeholder="Konfirmasi Password Baru" required>
-            <br><br>
-            <button class="waves-effect blue darken-2 btn" type="submit" name="gantiPassword">Ganti Password</button>
+    <div class="container">
+        <h3 class="header light center">Ganti Kata Sandi</h3>
+        <p class="center light">Untuk keamanan, gunakan kata sandi yang kuat dan unik.</p>
+        <div class="card-panel center-card" style="max-width: 500px; margin: 2rem auto;">
+            <form action="" method="POST">
+                <div class="input-field">
+                    <i class="material-icons prefix">lock_open</i>
+                    <input type="password" name="passwordLama" id="passwordLama" required>
+                    <label for="passwordLama">Password Lama</label>
+                </div>
+                <div class="input-field">
+                    <i class="material-icons prefix">lock</i>
+                    <input type="password" name="password" id="password" required>
+                    <label for="password">Password Baru (min. 6 karakter)</label>
+                </div>
+                <div class="input-field">
+                    <i class="material-icons prefix">replay</i>
+                    <input type="password" name="repassword" id="repassword" required>
+                    <label for="repassword">Konfirmasi Password Baru</label>
+                </div>
+                <br>
+                <div class="center">
+                    <button class="btn-large waves-effect waves-light" type="submit" name="gantiPassword" style="width:100%;">Ganti Password</button>
+                </div>
+            </form>
         </div>
-    </form>
-    <br>
+    </div>
 </main>
 <?php include "footer.php"; ?>
+
+<?php
+if (!empty($success_message)) { echo "<script>Swal.fire('Berhasil', '" . addslashes($success_message) . "', 'success');</script>"; }
+if (!empty($error_message)) { echo "<script>Swal.fire('Gagal', '" . addslashes($error_message) . "', 'error');</script>"; }
+?>
 </body>
 </html>
