@@ -6,7 +6,7 @@ include 'functions/functions.php';
 // Menghalangi akses jika sudah login
 cekLogin();
 
-// --- Penanganan Pesan Error dari Session ---
+// Penanganan Pesan Error dari Session
 $pesan_error = null;
 if (isset($_SESSION['pesan_error'])) {
     $pesan_error = $_SESSION['pesan_error'];
@@ -16,7 +16,7 @@ if (isset($_SESSION['pesan_error'])) {
 // Ketika tombol registrasi di klik
 if (isset($_POST["registrasi"])) {
 
-    // --- Fungsi Registrasi dengan Validasi Detail ---
+    // Fungsi Registrasi dengan Validasi Detail
     function registrasi($data)
     {
         global $connect;
@@ -39,30 +39,27 @@ if (isset($_POST["registrasi"])) {
             return "Nomor Telepon harus berupa 10 hingga 15 digit angka.";
         }
         if (empty($alamat)) {
-            return "Alamat Lengkap wajib diisi.";
+            return "Alamat belum ditentukan. Silakan klik peta untuk mengisinya.";
         }
         if ($password !== $password2) {
             return "Konfirmasi password tidak cocok.";
         }
 
-        // Cek apakah email sudah ada
         $result = mysqli_query($connect, "SELECT email FROM pelanggan WHERE email = '$email'");
         if (mysqli_fetch_assoc($result)) {
             return "Email sudah terdaftar. Silakan gunakan email lain.";
         }
 
-        // Query INSERT tanpa kolom 'kota'
+        // Query INSERT tanpa 'kota'
         $query = "INSERT INTO pelanggan (nama, email, telp, alamat, foto, password) 
                   VALUES ('$nama', '$email', '$noTelp', '$alamat', 'default.png', '$password')";
         mysqli_query($connect, $query);
         return mysqli_affected_rows($connect) > 0;
     }
 
-    // --- Logika Proses Form ---
     $hasil_registrasi = registrasi($_POST);
 
     if ($hasil_registrasi === true) {
-        // Jika registrasi berhasil, langsung login dan redirect
         $email = $_POST["email"];
         $query = mysqli_query($connect, "SELECT * FROM pelanggan WHERE email = '$email'");
         $pelanggan = mysqli_fetch_assoc($query);
@@ -71,11 +68,10 @@ if (isset($_POST["registrasi"])) {
         $_SESSION["login-pelanggan"] = true;
 
         $_SESSION['pesan_sukses'] = "Pendaftaran Berhasil! Selamat Bergabung dengan LaundryHub.";
-        header("Location: index.php"); // Redirect ke halaman utama
+        header("Location: index.php");
         exit;
 
     } else {
-        // Jika registrasi gagal, simpan pesan error ke session dan reload halaman
         $_SESSION['pesan_error'] = $hasil_registrasi;
         header("Location: registrasi-pelanggan.php");
         exit;
@@ -89,6 +85,14 @@ if (isset($_POST["registrasi"])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include "headtags.html"; ?>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map { height: 400px; cursor: pointer; background-color: #f0f0f0; border-radius: 5px; }
+        textarea[readonly] {
+            color: #9e9e9e !important;
+            border-bottom: 1px dotted #9e9e9e !important;
+        }
+    </style>
     <title>Registrasi Pelanggan</title>
 </head>
 <body>
@@ -112,10 +116,16 @@ if (isset($_POST["registrasi"])) {
                         <input type="tel" id="telp" name="noTelp" required pattern="[0-9]{10,15}" title="Nomor telepon harus terdiri dari 10-15 digit angka.">
                         <label for="telp">No. Telepon</label>
                     </div>
+
+                    <label>Tentukan Alamat Anda di Peta</label>
+                    <div id="map" style="margin-top: 10px;"></div>
+                    <p class="light" id="map-helper-text">Klik pada peta untuk mengisi alamat Anda secara otomatis.</p>
+
                     <div class="input-field">
-                        <textarea id="alamat" class="materialize-textarea" name="alamat" required></textarea>
-                        <label for="alamat">Alamat Lengkap</label>
+                        <textarea id="alamat" class="materialize-textarea" name="alamat" readonly></textarea>
+                        <label for="alamat">Alamat Lengkap (Otomatis dari Peta)</label>
                     </div>
+
                     <div class="input-field">
                         <input type="password" id="password" name="password" required>
                         <label for="password">Password</label>
@@ -138,6 +148,48 @@ if (isset($_POST["registrasi"])) {
 </main>
 
 <?php include "footer.php"; ?>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('map').setView([-6.200000, 106.816666], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var marker;
+        var alamatInput = document.getElementById('alamat');
+        var mapHelperText = document.getElementById('map-helper-text');
+
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lon = e.latlng.lng;
+
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng).addTo(map);
+            }
+
+            mapHelperText.innerText = "Mencari alamat...";
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.display_name) {
+                        alamatInput.value = data.display_name;
+                        mapHelperText.innerText = "Alamat berhasil ditemukan!";
+                    }
+                    M.updateTextFields();
+                })
+                .catch(err => {
+                    console.error("Gagal fetch alamat:", err);
+                    mapHelperText.innerText = "Gagal mendapatkan alamat. Silakan coba klik lagi.";
+                    alamatInput.value = "Gagal mengambil alamat otomatis.";
+                    M.updateTextFields();
+                });
+        });
+    });
+</script>
 
 <?php
 // Script untuk menampilkan popup error jika ada

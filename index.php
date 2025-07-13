@@ -2,6 +2,13 @@
 session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
+
+// --- BAGIAN BARU: Ambil pesan notifikasi dari session jika ada ---
+$pesan_sukses = null;
+if (isset($_SESSION['pesan_sukses'])) {
+    $pesan_sukses = $_SESSION['pesan_sukses'];
+    unset($_SESSION['pesan_sukses']); // Hapus pesan setelah diambil
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,7 +41,6 @@ include 'functions/functions.php';
 
         <div class="row center">
             <?php
-            // JIKA PELANGGAN SUDAH LOGIN, TAMPILKAN TOMBOL STATUS
             if (isset($_SESSION["login-pelanggan"])) :
                 ?>
                 <a href="status.php" class="btn-large waves-effect waves-light green" style="margin-bottom: 15px;">
@@ -54,6 +60,12 @@ include 'functions/functions.php';
 </main>
 
 <?php include "footer.php" ?>
+
+<?php
+if ($pesan_sukses) {
+    echo "<script>Swal.fire('Berhasil!', '" . addslashes($pesan_sukses) . "', 'success');</script>";
+}
+?>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -77,12 +89,9 @@ include 'functions/functions.php';
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
 
-            // --- BAGIAN BARU UNTUK REVERSE GEOCODING ---
-            // 1. Panggil API untuk mendapatkan nama alamat dari koordinat
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
                 .then(res => res.json())
                 .then(addressData => {
-                    // 2. Tampilkan alamat yang didapat
                     const detailedAddress = addressData.display_name || 'Lokasi Anda';
                     statusP.innerHTML = `Lokasi Anda saat ini:<br><strong>${detailedAddress}</strong><br>Mencari laundry di sekitar...`;
                 })
@@ -91,7 +100,6 @@ include 'functions/functions.php';
                     statusP.textContent = 'Lokasi ditemukan! Mencari laundry di sekitar...';
                 })
                 .finally(() => {
-                    // 3. Setelah mendapatkan alamat (atau gagal), tetap lanjutkan mencari laundry
                     fetch(`ajax/find_nearby.php?lat=${latitude}&lon=${longitude}`)
                         .then(response => response.text())
                         .then(data => {
