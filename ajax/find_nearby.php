@@ -58,21 +58,26 @@ if (count($mitra_list) > 0) {
     foreach ($mitra_list as $mitra) {
         echo '
         <div class="col s12 m6 l4">
-            <div class="card">
+            <div class="card" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                 <a href="detail-mitra.php?id=' . $mitra['id_mitra'] . '">
                     <div class="card-image">
                         <img src="img/mitra/' . htmlspecialchars($mitra['foto']) . '" alt="Foto ' . htmlspecialchars($mitra["nama_laundry"]) . '" style="height: 200px; object-fit: cover;">
-                        <span class="card-title" style="background-color: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 0 8px 0 0;">' . htmlspecialchars($mitra["nama_laundry"]) . '</span>
+                        <span class="card-title" style="background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%); padding: 10px 15px; border-radius: 0 12px 0 0; font-weight: 600; font-size: 1.2rem;">' . htmlspecialchars($mitra["nama_laundry"]) . '</span>
                     </div>
                 </a>
-                <div class="card-content" style="padding: 20px;">
-                    <p class="truncate" style="color: var(--text-dark);"><i class="material-icons tiny" style="vertical-align: middle;">place</i> ' . htmlspecialchars($mitra["alamat"]) . '</p>
+                <div class="card-content" style="padding: 20px; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+                    <p class="truncate" style="color: var(--text-dark); font-size: 1rem; margin-bottom: 15px;">
+                        <i class="material-icons tiny" style="vertical-align: middle; color: var(--primary-blue);">place</i> 
+                        ' . htmlspecialchars($mitra["alamat"]) . '
+                    </p>
                     <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="light" style="font-weight: 500; color: var(--primary-blue);">
-                            <i class="material-icons tiny" style="vertical-align: middle;">near_me</i>
+                        <span class="light" style="font-weight: 600; color: var(--dark-navy); font-size: 0.9rem;">
+                            <i class="material-icons tiny" style="vertical-align: middle; color: var(--primary-blue);">near_me</i>
                             ' . round($mitra['distance'], 1) . ' km dari Anda
                         </span>
-                        <a href="detail-mitra.php?id=' . $mitra['id_mitra'] . '" class="btn-small waves-effect waves-light">Detail</a>
+                        <a href="detail-mitra.php?id=' . $mitra['id_mitra'] . '" class="btn-small waves-effect waves-light" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-navy) 100%); border-radius: 20px; font-weight: 600;">
+                            <i class="material-icons tiny left">visibility</i>Detail
+                        </a>
                     </div>
                 </div>
             </div>

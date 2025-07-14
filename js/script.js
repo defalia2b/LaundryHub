@@ -3,6 +3,9 @@ $(document).ready(function () {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-    var elems = document.querySelectorAll('.slider');
-    var instances = M.Slider.init(elems, options);
+    // Initialize sliders if they exist
+    var sliderElems = document.querySelectorAll('.slider');
+    if (sliderElems.length > 0) {
+        var sliderInstances = M.Slider.init(sliderElems);
+    }
 });

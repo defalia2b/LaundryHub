@@ -67,14 +67,20 @@ unset($_SESSION['pesan_error']);
 
 <main class="main-content">
     <div class="container">
-        <h3 class="header light center">Formulir Pemesanan</h3>
-        <p class="center light">Anda akan memesan layanan di: <strong><?= htmlspecialchars($mitra["nama_laundry"]) ?></strong></p>
-
-        <div class="card-panel">
+        <div class="row">
+            <div class="col s12">
+                <div class="card-panel" style="border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h3 class="header light center" style="color: var(--dark-navy); margin-bottom: 10px;">Formulir Pemesanan</h3>
+                    <p class="center light" style="color: var(--text-dark); font-size: 1.1rem; margin-bottom: 30px;">
+                        Anda akan memesan layanan di: 
+                        <strong style="color: var(--primary-blue); font-size: 1.2rem;"><?= htmlspecialchars($mitra["nama_laundry"]) ?></strong>
+                    </p>
             <form action="" method="post">
                 <div class="row">
                     <div class="col s12 m6">
-                        <h5 class="light"><i class="material-icons left">account_circle</i>Informasi Anda</h5>
+                        <h5 class="light" style="color: var(--dark-navy); font-weight: 600; margin-bottom: 20px;">
+                            <i class="material-icons left" style="color: var(--primary-blue);">account_circle</i>Informasi Anda
+                        </h5>
                         <div class="input-field">
                             <input id="nama" type="text" disabled value="<?= htmlspecialchars($pelanggan['nama']) ?>">
                             <label for="nama">Nama Pelanggan</label>
@@ -91,7 +97,9 @@ unset($_SESSION['pesan_error']);
                     </div>
 
                     <div class="col s12 m6">
-                        <h5 class="light"><i class="material-icons left">shopping_basket</i>Detail Pesanan</h5>
+                        <h5 class="light" style="color: var(--dark-navy); font-weight: 600; margin-bottom: 20px;">
+                            <i class="material-icons left" style="color: var(--primary-blue);">shopping_basket</i>Detail Pesanan
+                        </h5>
                         <div class="input-field">
                             <select name="jenis" required>
                                 <option value="" disabled selected>-- Pilih Jenis Layanan --</option>
@@ -115,16 +123,32 @@ unset($_SESSION['pesan_error']);
                     </div>
                 </div>
                 <div class="row center">
-                    <button class="btn-large waves-effect waves-light" type="submit" name="pesan">
+                    <button class="btn-large waves-effect waves-light" type="submit" name="pesan" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-navy) 100%); border-radius: 25px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                         <i class="material-icons left">send</i> Buat Pesanan
                     </button>
                 </div>
             </form>
+                </div>
+            </div>
         </div>
     </div>
 </main>
 
 <?php include 'footer.php' ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="js/script.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Materialize select dropdowns
+    var selects = document.querySelectorAll('select');
+    M.FormSelect.init(selects);
+    
+    // Initialize textareas
+    var textareas = document.querySelectorAll('.materialize-textarea');
+    M.CharacterCounter.init(textareas);
+});
+</script>
 
 <?php
 if ($pesan_error) {

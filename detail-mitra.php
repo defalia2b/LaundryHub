@@ -3,156 +3,232 @@ session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-if (!isset($_GET["id"]) || !is_numeric($_GET["id"])) {
-    header("Location: index.php");
+if (isset($_GET['id'])) {
+    $id_mitra = $_GET['id'];
+    $query_mitra = mysqli_query($connect, "SELECT * FROM mitra WHERE id_mitra = '$id_mitra'");
+    if (mysqli_num_rows($query_mitra) == 0) {
+        header('Location: index.php');
+        exit;
+    }
+    $data_mitra = mysqli_fetch_assoc($query_mitra);
+} else {
+    header('Location: index.php');
     exit;
 }
-$idMitra = $_GET["id"];
 
-$query = mysqli_query($connect, "SELECT * FROM mitra WHERE id_mitra = '$idMitra'");
-if (mysqli_num_rows($query) === 0) {
-    header("Location: index.php");
-    exit;
+// Mengambil dan memproses data ulasan
+$query_ulasan = mysqli_query($connect,
+    "SELECT t.rating, t.komentar, pl.nama as nama_pelanggan, t.tgl_transaksi 
+     FROM transaksi t 
+     JOIN pelanggan pl ON t.id_pelanggan = pl.id_pelanggan
+     WHERE t.id_mitra = '$id_mitra' AND t.rating IS NOT NULL 
+     ORDER BY t.tgl_transaksi DESC"
+);
+
+$ulasan_data = [];
+$total_rating = 0;
+$jumlah_ulasan = 0;
+
+if (mysqli_num_rows($query_ulasan) > 0) {
+    $jumlah_ulasan = mysqli_num_rows($query_ulasan);
+    while ($row = mysqli_fetch_assoc($query_ulasan)) {
+        $ulasan_data[] = $row;
+        $total_rating += (float)$row['rating'];
+    }
 }
-$mitra = mysqli_fetch_assoc($query);
 
-// --- START: Perbaikan Query dan Logika Rating ---
-// Asumsi rating di DB adalah skala 1-10, kita ubah ke skala 5
-$rating_query = mysqli_query($connect, "SELECT AVG(rating / 2) as average_rating, COUNT(id_transaksi) as total_reviews FROM transaksi WHERE id_mitra = '$idMitra' AND rating IS NOT NULL AND rating > 0");
-$rating_data = mysqli_fetch_assoc($rating_query);
-// Pembulatan 1 desimal
-$average_rating = round($rating_data['average_rating'] ?? 0, 1);
-$total_reviews = $rating_data['total_reviews'] ?? 0;
-// --- END: Perbaikan Query dan Logika Rating ---
+// Menghitung rata-rata rating
+$rata_rata_rating_10 = ($jumlah_ulasan > 0) ? $total_rating / $jumlah_ulasan : 0;
+$rata_rata_rating_5 = $rata_rata_rating_10 / 2;
+$display_stars_avg = round($rata_rata_rating_5);
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <?php include "headtags.html"; ?>
-    <title>Detail Mitra - <?= htmlspecialchars($mitra["nama_laundry"]) ?></title>
+    <?php include 'headtags.html'; ?>
+    <title><?= htmlspecialchars($data_mitra['nama_laundry']); ?> - Detail Mitra</title>
+    <style>
+        .mitra-header {
+            background: linear-gradient(135deg, var(--dark-navy) 0%, var(--primary-blue) 100%);
+            color: white; 
+            padding: 50px 20px; 
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .mitra-header h3 { 
+            margin: 0; 
+            font-weight: 600; 
+            font-size: 2.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .mitra-header p { 
+            margin: 10px 0 0 0; 
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        .mitra-info, .mitra-ulasan { 
+            margin-top: 20px; 
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .mitra-info .card-content {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+        .mitra-info .card-title {
+            color: var(--dark-navy);
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        .mitra-info p {
+            font-size: 1.1rem;
+            margin: 15px 0;
+            color: var(--text-dark);
+        }
+        .mitra-info p strong {
+            color: var(--dark-navy);
+            font-weight: 600;
+        }
+        .mitra-info .material-icons {
+            color: var(--primary-blue);
+            margin-right: 8px;
+        }
+        .card-action .btn {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-navy) 100%);
+            border-radius: 25px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        .card-action .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .rating-summary { 
+            text-align: center; 
+            padding: 25px; 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px; 
+            border: 1px solid #dee2e6;
+        }
+        .rating-summary .rating-value { 
+            font-size: 3rem; 
+            font-weight: bold; 
+            color: var(--dark-navy);
+            margin-bottom: 10px;
+        }
+        .rating-summary .stars { 
+            font-size: 2rem; 
+            color: #ffb400; 
+            margin-bottom: 10px;
+        }
+        .collection-item.avatar .title { 
+            font-weight: 600; 
+            color: var(--dark-navy);
+        }
+        .collection-item .rating-stars { 
+            color: #ffb400; 
+            margin: 5px 0;
+        }
+        .collection-item .comment { 
+            color: var(--text-dark); 
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .collection-header h4 {
+            color: var(--dark-navy);
+            font-weight: 600;
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
 <?php include 'header.php'; ?>
 <main class="main-content">
+    <div class="mitra-header">
+        <h3><?= htmlspecialchars($data_mitra['nama_laundry']); ?></h3>
+        <p><?= htmlspecialchars($data_mitra['alamat']); ?></p>
+    </div>
+
     <div class="container">
+        <div class="row">
+            <div class="col s12 m7">
+                <div class="card mitra-info">
+                    <div class="card-content">
+                        <span class="card-title">Informasi Mitra</span>
 
-        <div class="card-panel" style="margin-top: 1rem;">
-            <div class="row" style="margin-bottom: 0;">
-                <div class="col s12 m4 center-align">
-                    <img src="img/mitra/<?= htmlspecialchars($mitra['foto']) ?>" class="responsive-img" alt="Foto <?= htmlspecialchars($mitra['nama_laundry']) ?>" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-blue);">
-                </div>
-                <div class="col s12 m8">
-                    <h3 style="margin-top: 10px; margin-bottom: 5px;"><?= htmlspecialchars($mitra["nama_laundry"]) ?></h3>
+                        <p><strong><i class="material-icons tiny">phone</i> Telepon:</strong>
+                            <?= !empty($data_mitra['telp']) ? htmlspecialchars($data_mitra['telp']) : 'Tidak tersedia'; ?>
+                        </p>
 
-                    <div class="star-rating-display" style="margin-bottom: 15px;">
-                        <?php
-                        $full_stars = floor($average_rating);
-                        $half_star = ($average_rating - $full_stars) >= 0.5;
-                        $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
+                        <p><strong><i class="material-icons tiny">email</i> Email:</strong> <?= htmlspecialchars($data_mitra['email']); ?></p>
 
-                        // Tampilkan bintang penuh
-                        for ($i = 0; $i < $full_stars; $i++) {
-                            echo '<i class="material-icons">star</i>';
-                        }
-                        // Tampilkan bintang setengah
-                        if ($half_star) {
-                            echo '<i class="material-icons">star_half</i>';
-                        }
-                        // Tampilkan bintang kosong
-                        for ($i = 0; $i < $empty_stars; $i++) {
-                            echo '<i class="material-icons">star_border</i>';
-                        }
-                        ?>
-                        <span style="vertical-align: top; margin-left: 10px; font-weight: 500; font-size: 1.1rem;"><?= $average_rating ?> dari <?= $total_reviews ?> ulasan</span>
                     </div>
-                    <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">person</i> Pemilik: <?= htmlspecialchars($mitra["nama_pemilik"]) ?></p>
-                    <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">phone</i> No. HP: <?= htmlspecialchars($mitra["telp"]) ?></p>
-                    <p class="light" style="font-size: 1.1rem;"><i class="material-icons tiny" style="vertical-align: middle;">place</i> Alamat: <?= htmlspecialchars($mitra["alamat"]) ?></p>
-                    <br>
-                    <a class="btn-large waves-effect waves-light" href="pesan-laundry.php?id=<?= $idMitra ?>">
-                        <i class="material-icons left">shopping_cart</i>Pesan Layanan Sekarang
-                    </a>
+                    <div class="card-action">
+                        <a href="pesan-laundry.php?id=<?= $data_mitra['id_mitra']; ?>" class="btn blue waves-effect waves-light">
+                            <i class="material-icons left">shopping_cart</i>Pesan Sekarang
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="section">
-            <h4 class="header light center">Daftar Harga Layanan (per Kg)</h4>
-            <div class="row">
-                <?php
-                $queryHarga = mysqli_query($connect, "SELECT * FROM harga WHERE id_mitra = '$idMitra' ORDER BY FIELD(jenis, 'cuci', 'setrika', 'komplit')");
-                if (mysqli_num_rows($queryHarga) > 0) :
-                    while ($harga = mysqli_fetch_assoc($queryHarga)) :
-                        $icon = 'local_laundry_service';
-                        if ($harga['jenis'] == 'setrika') $icon = 'iron';
-                        if ($harga['jenis'] == 'komplit') $icon = 'check_circle';
-                        ?>
-                        <div class="col s12 m4">
-                            <div class="card-panel center-align hoverable">
-                                <i class="material-icons large" style="color: var(--primary-blue);"><?= $icon ?></i>
-                                <h5><?= ucfirst(htmlspecialchars($harga['jenis'])) ?></h5>
-                                <h4 class="light" style="color: var(--dark-navy); margin: 10px 0;">Rp <?= number_format($harga['harga']) ?>,-</h4>
-                                <p class="light">per Kilogram</p>
-                            </div>
-                        </div>
-                    <?php
-                    endwhile;
-                else :
-                    echo "<p class='center light'>Mitra ini belum menetapkan harga layanan.</p>";
-                endif;
-                ?>
-            </div>
-        </div>
-
-        <div class="section">
-            <h4 class="header light center">Ulasan Pelanggan</h4>
-            <?php
-            $queryUlasan = mysqli_query($connect, "SELECT t.*, p.nama as nama_pelanggan, p.foto as foto_pelanggan 
-                                                  FROM transaksi t 
-                                                  JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan 
-                                                  WHERE t.id_mitra = '$idMitra' AND t.komentar IS NOT NULL AND t.komentar != '' 
-                                                  ORDER BY t.tgl_transaksi DESC LIMIT 5");
-            if (mysqli_num_rows($queryUlasan) > 0) :
-                while ($ulasan = mysqli_fetch_assoc($queryUlasan)) :
-                    ?>
-                    <div class="card-panel" style="margin-bottom: 1rem;">
-                        <div class="row valign-wrapper" style="margin-bottom: 0;">
-                            <div class="col s3 m2 l1 center-align">
-                                <img src="img/pelanggan/<?= htmlspecialchars($ulasan['foto_pelanggan']) ?>" alt="Foto Pelanggan" class="circle responsive-img">
-                            </div>
-                            <div class="col s9 m10 l11">
-                                <strong style="color: var(--dark-navy); font-size: 1.1rem;"><?= htmlspecialchars($ulasan['nama_pelanggan']) ?></strong>
-                                <div class="star-rating-display" style="margin-left: 10px;">
-                                    <?php
-                                    // Mengubah rating ulasan per item ke skala 5
-                                    $item_rating = ($ulasan['rating'] ?? 0) / 2;
-                                    $item_full = floor($item_rating);
-                                    $item_half = ($item_rating - $item_full) >= 0.5;
-                                    $item_empty = 5 - $item_full - ($item_half ? 1 : 0);
-
-                                    for ($i = 0; $i < $item_full; $i++) echo '<i class="material-icons tiny">star</i>';
-                                    if ($item_half) echo '<i class="material-icons tiny">star_half</i>';
-                                    for ($i = 0; $i < $item_empty; $i++) echo '<i class="material-icons tiny">star_border</i>';
-                                    ?>
+            <div class="col s12 m5">
+                <div class="card mitra-ulasan">
+                    <div class="card-content">
+                        <span class="card-title">Rating & Ulasan</span>
+                        <div class="rating-summary">
+                            <?php if ($jumlah_ulasan > 0) : ?>
+                                <div class="rating-value"><?= number_format($rata_rata_rating_5, 1); ?></div>
+                                <div class="stars">
+                                    <?= str_repeat('★', $display_stars_avg) . str_repeat('☆', 5 - $display_stars_avg) ?>
                                 </div>
-                                <p class="light" style="margin-top: 5px; font-style: italic;">"<?= htmlspecialchars($ulasan['komentar']) ?>"</p>
-                                <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">Diulas pada: <?= date('d M Y', strtotime($ulasan['tgl_transaksi'])) ?></p>
-                            </div>
+                                <div>Berdasarkan <?= $jumlah_ulasan; ?> ulasan</div>
+                            <?php else : ?>
+                                <div class="grey-text">Belum ada ulasan</div>
+                            <?php endif; ?>
                         </div>
                     </div>
-                <?php
-                endwhile;
-            else :
-                echo "<p class='center light'>Belum ada ulasan untuk mitra ini.</p>";
-            endif;
-            ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12">
+                <ul class="collection with-header">
+                    <li class="collection-header"><h4>Ulasan Pelanggan</h4></li>
+                    <?php if ($jumlah_ulasan > 0) : ?>
+                        <?php foreach ($ulasan_data as $ulasan) : ?>
+                            <?php
+                            $rating_db = (float)$ulasan['rating'];
+                            $display_stars_item = round($rating_db / 2);
+                            $display_stars_item = max(1, min(5, $display_stars_item));
+                            ?>
+                            <li class="collection-item avatar">
+                                <i class="material-icons circle blue">person</i>
+                                <span class="title"><?= htmlspecialchars($ulasan['nama_pelanggan']); ?></span>
+                                <p class="rating-stars">
+                                    <?= str_repeat('★', $display_stars_item) . str_repeat('☆', 5 - $display_stars_item) ?>
+                                </p>
+                                <p class="comment">
+                                    <?= htmlspecialchars($ulasan['komentar']); ?>
+                                </p>
+                                <span class="secondary-content grey-text"><?= date('d M Y', strtotime($ulasan['tgl_transaksi'])); ?></span>
+                            </li>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <li class="collection-item">
+                            <p class="center grey-text">Mitra ini belum memiliki ulasan.</p>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
         </div>
     </div>
 </main>
-
-<?php include "footer.php"; ?>
+<?php include 'footer.php'; ?>
 </body>
 </html>
