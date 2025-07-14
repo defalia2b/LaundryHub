@@ -27,8 +27,14 @@ function haversine_distance($lat1, $lon1, $lat2, $lon2) {
     return $distance;
 }
 
-// Ambil semua data mitra dari database yang memiliki koordinat
-$result = mysqli_query($connect, "SELECT * FROM mitra WHERE latitude IS NOT NULL AND longitude IS NOT NULL");
+// Ambil semua data mitra dari database yang memiliki koordinat dengan rating
+$result = mysqli_query($connect, "SELECT m.*, 
+                                  AVG(t.rating) as avg_rating,
+                                  COUNT(t.rating) as total_reviews
+                                  FROM mitra m 
+                                  LEFT JOIN transaksi t ON m.id_mitra = t.id_mitra AND t.rating IS NOT NULL AND t.status_ulasan = 'Aktif'
+                                  WHERE m.latitude IS NOT NULL AND m.longitude IS NOT NULL
+                                  GROUP BY m.id_mitra");
 
 if (!$result) {
     http_response_code(500); // Internal Server Error
@@ -70,6 +76,17 @@ if (count($mitra_list) > 0) {
                         <i class="material-icons tiny" style="vertical-align: middle; color: var(--primary-blue);">place</i> 
                         ' . htmlspecialchars($mitra["alamat"]) . '
                     </p>
+                    
+                    ' . ($mitra['avg_rating'] ? '
+                    <div style="margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="color: #ffb400; font-size: 16px;">' . str_repeat('★', round($mitra['avg_rating'] / 2)) . str_repeat('☆', 5 - round($mitra['avg_rating'] / 2)) . '</span>
+                            <span style="font-weight: bold; color: #333; font-size: 14px;">' . number_format($mitra['avg_rating'] / 2, 1) . '/5</span>
+                            <span style="font-size: 12px; color: #666;">(' . $mitra['total_reviews'] . ' ulasan)</span>
+                        </div>
+                    </div>
+                    ' : '<p style="color: #999; font-size: 12px; margin-bottom: 15px;">Belum ada rating</p>') . '
+                    
                     <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                         <span class="light" style="font-weight: 600; color: var(--dark-navy); font-size: 0.9rem;">
                             <i class="material-icons tiny" style="vertical-align: middle; color: var(--primary-blue);">near_me</i>

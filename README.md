@@ -35,6 +35,24 @@ Informatics Study Program, Faculty of CompSci, Universitas Esa Unggul
 - **Email:** `admin`
 - **Password:** `admin`
 
+## Fitur Sistem Rating
+
+### Untuk Pelanggan:
+- Memberikan rating 1-10 bintang untuk layanan yang sudah selesai
+- Menulis komentar/ulasan
+- Melihat rating yang sudah diberikan
+
+### Untuk Mitra:
+- Melihat rating dan ulasan dari pelanggan
+- Melaporkan ulasan yang tidak pantas ke admin
+- Melihat status laporan yang sudah dikirim
+
+### Untuk Admin:
+- Melihat laporan ulasan dari mitra
+- Menghapus ulasan yang tidak pantas
+- Mengabaikan laporan yang tidak valid
+- Mengelola moderasi konten
+
 ## Troubleshooting
 
 - If you get a database connection error, check your credentials in `connect-db.php`.

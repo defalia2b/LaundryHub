@@ -198,12 +198,96 @@ nav ul a:hover {
 /* 8. Star Rating (Modernized)
 -------------------------------------------------- */
 .star-rating-display {
-    display: inline-block;
-    font-size: 1.2rem;
-    color: #f1c40f; /* Yellow for stars */
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
+
+.star-rating-display .star {
+    color: #ffb400;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.star-rating-display .star:hover {
+    transform: scale(1.1);
+}
+
 .star-rating-display .muted-star {
-    color: #ccc;
+    color: #ddd;
+}
+
+/* Rating System Integration */
+.rating-container {
+    display: inline-block;
+    margin: 10px 0;
+}
+
+.rating-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.rating-star {
+    font-size: 24px;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    user-select: none;
+}
+
+.rating-star:hover,
+.rating-star.active {
+    color: #ffb400;
+}
+
+.rating-star.filled {
+    color: #ffb400;
+}
+
+.rating-text {
+    margin-left: 10px;
+    font-size: 14px;
+    color: #666;
+}
+
+.rating-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating-display .stars {
+    color: #ffb400;
+    font-size: 18px;
+}
+
+.rating-display .rating-value {
+    font-weight: bold;
+    color: #333;
+}
+
+.report-button {
+    margin-left: 10px;
+    font-size: 12px;
+    padding: 4px 8px;
+    background: #ff5722;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.report-button:hover {
+    background: #d84315;
+}
+
+.report-button:disabled {
+    background: #999;
+    cursor: not-allowed;
 }
 
 /* 9. Utility & Responsive Classes

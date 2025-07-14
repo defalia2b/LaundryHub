@@ -21,7 +21,7 @@ $query_ulasan = mysqli_query($connect,
     "SELECT t.rating, t.komentar, pl.nama as nama_pelanggan, t.tgl_transaksi 
      FROM transaksi t 
      JOIN pelanggan pl ON t.id_pelanggan = pl.id_pelanggan
-     WHERE t.id_mitra = '$id_mitra' AND t.rating IS NOT NULL 
+     WHERE t.id_mitra = '$id_mitra' AND t.rating IS NOT NULL AND t.status_ulasan = 'Aktif'
      ORDER BY t.tgl_transaksi DESC"
 );
 
@@ -48,6 +48,7 @@ $display_stars_avg = round($rata_rata_rating_5);
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include 'headtags.html'; ?>
+    <link rel="stylesheet" href="css/rating.css">
     <title><?= htmlspecialchars($data_mitra['nama_laundry']); ?> - Detail Mitra</title>
     <style>
         .mitra-header {
@@ -182,11 +183,15 @@ $display_stars_avg = round($rata_rata_rating_5);
                         <span class="card-title">Rating & Ulasan</span>
                         <div class="rating-summary">
                             <?php if ($jumlah_ulasan > 0) : ?>
-                                <div class="rating-value"><?= number_format($rata_rata_rating_5, 1); ?></div>
-                                <div class="stars">
-                                    <?= str_repeat('★', $display_stars_avg) . str_repeat('☆', 5 - $display_stars_avg) ?>
+                                <div class="average-rating"><?= number_format($rata_rata_rating_5, 1); ?></div>
+                                <div class="rating-display">
+                                    <span class="stars" data-rating="<?= $rata_rata_rating_10 ?>">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <span class="rating-star <?= $i <= $display_stars_avg ? 'filled' : '' ?>">★</span>
+                                        <?php endfor; ?>
+                                    </span>
                                 </div>
-                                <div>Berdasarkan <?= $jumlah_ulasan; ?> ulasan</div>
+                                <div class="total-reviews">Berdasarkan <?= $jumlah_ulasan; ?> ulasan</div>
                             <?php else : ?>
                                 <div class="grey-text">Belum ada ulasan</div>
                             <?php endif; ?>
@@ -210,9 +215,14 @@ $display_stars_avg = round($rata_rata_rating_5);
                             <li class="collection-item avatar">
                                 <i class="material-icons circle blue">person</i>
                                 <span class="title"><?= htmlspecialchars($ulasan['nama_pelanggan']); ?></span>
-                                <p class="rating-stars">
-                                    <?= str_repeat('★', $display_stars_item) . str_repeat('☆', 5 - $display_stars_item) ?>
-                                </p>
+                                <div class="rating-display">
+                                    <span class="stars" data-rating="<?= $ulasan['rating'] ?>">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <span class="rating-star <?= $i <= $display_stars_item ? 'filled' : '' ?>">★</span>
+                                        <?php endfor; ?>
+                                    </span>
+                                    <span class="rating-value"><?= $ulasan['rating'] ?>/10</span>
+                                </div>
                                 <p class="comment">
                                     <?= htmlspecialchars($ulasan['komentar']); ?>
                                 </p>
@@ -230,5 +240,6 @@ $display_stars_avg = round($rata_rata_rating_5);
     </div>
 </main>
 <?php include 'footer.php'; ?>
+<script src="js/rating.js"></script>
 </body>
 </html>

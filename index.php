@@ -33,6 +33,7 @@ if (isset($_SESSION['login-pelanggan'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/rating.css">
     <title>LaundryHub - Temukan Laundry Terbaik di Sekitarmu</title>
     <?php include 'headtags.html' ?>
 </head>
@@ -75,6 +76,7 @@ if (isset($_SESSION['login-pelanggan'])) {
 </main>
 
 <?php include "footer.php" ?>
+<script src="js/rating.js"></script>
 
 <?php
 // Tampilkan notifikasi jika ada

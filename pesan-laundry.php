@@ -60,6 +60,7 @@ unset($_SESSION['pesan_error']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include 'headtags.html' ?>
+    <link rel="stylesheet" href="css/rating.css">
     <title>Pesan Layanan di <?= htmlspecialchars($mitra["nama_laundry"]) ?></title>
 </head>
 <body>
@@ -75,6 +76,32 @@ unset($_SESSION['pesan_error']);
                         Anda akan memesan layanan di: 
                         <strong style="color: var(--primary-blue); font-size: 1.2rem;"><?= htmlspecialchars($mitra["nama_laundry"]) ?></strong>
                     </p>
+                    
+                    <?php
+                    // Ambil rating mitra
+                    $rating_query = mysqli_query($connect, 
+                        "SELECT AVG(t.rating) as avg_rating, COUNT(t.rating) as total_reviews 
+                         FROM transaksi t 
+                         WHERE t.id_mitra = '$idMitra' AND t.rating IS NOT NULL AND t.status_ulasan = 'Aktif'"
+                    );
+                    $rating_data = mysqli_fetch_assoc($rating_query);
+                    
+                    if ($rating_data['avg_rating']):
+                        $avg_rating_5 = $rating_data['avg_rating'] / 2;
+                        $display_stars = round($avg_rating_5);
+                    ?>
+                    <div class="center" style="margin-bottom: 20px;">
+                        <div class="rating-display">
+                            <span class="stars" data-rating="<?= $rating_data['avg_rating'] ?>">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <span class="rating-star <?= $i <= $display_stars ? 'filled' : '' ?>">★</span>
+                                <?php endfor; ?>
+                            </span>
+                            <span class="rating-value"><?= number_format($avg_rating_5, 1) ?>/5</span>
+                            <span style="font-size: 14px; color: #666;">(<?= $rating_data['total_reviews'] ?> ulasan)</span>
+                        </div>
+                    </div>
+                    <?php endif; ?>
             <form action="" method="post">
                 <div class="row">
                     <div class="col s12 m6">
@@ -137,6 +164,7 @@ unset($_SESSION['pesan_error']);
 <?php include 'footer.php' ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="js/script.js"></script>
+<script src="js/rating.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

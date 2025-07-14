@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['pesan_sukses'] = "Laporan untuk ulasan transaksi #$id_transaksi telah diabaikan.";
     }
 
-    header("Location: admin_ulasan.php");
+    header("Location: admin-ulasan.php");
     exit;
 }
 
@@ -66,6 +66,7 @@ unset($_SESSION['pesan_sukses']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include "headtags.html"; ?>
+    <link rel="stylesheet" href="css/rating.css">
     <title>Moderasi Ulasan - Admin Panel</title>
     <style>
         .report-card {
@@ -124,7 +125,15 @@ unset($_SESSION['pesan_sukses']);
                             <h6>Ulasan yang Dilaporkan:</h6>
                             <p>
                                 <strong>Pelanggan:</strong> <?= htmlspecialchars($laporan['nama_pelanggan']) ?><br>
-                                <strong>Rating:</strong> <span style="color: #ffb400;"><?= str_repeat('★', $display_stars) . str_repeat('☆', 5 - $display_stars) ?></span><br>
+                                <strong>Rating:</strong> 
+                                <div class="rating-display">
+                                    <span class="stars" data-rating="<?= $laporan['rating'] ?>">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <span class="rating-star <?= $i <= ($display_stars) ? 'filled' : '' ?>">★</span>
+                                        <?php endfor; ?>
+                                    </span>
+                                    <span class="rating-value"><?= $laporan['rating'] ?>/10</span>
+                                </div>
                             </p>
                             <blockquote><?= htmlspecialchars($laporan['komentar']) ?></blockquote>
                         </div>
@@ -150,6 +159,7 @@ unset($_SESSION['pesan_sukses']);
 
 <?php include "footer.php"; ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="js/rating.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         M.Modal.init(document.querySelectorAll('.modal'));

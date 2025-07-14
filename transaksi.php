@@ -134,6 +134,7 @@ if ($login_type == 'Mitra') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include "headtags.html"; ?>
+    <link rel="stylesheet" href="css/rating.css">
     <title>Riwayat Transaksi - <?= $login_type ?></title>
     <style>
         .card-transaksi { border-left: 5px solid #42a5f5; margin-bottom: 20px; }
@@ -399,11 +400,6 @@ if ($login_type == 'Mitra') {
                 else { echo "Menampilkan transaksi dengan " . implode(', ', $status_filters) . "."; }
                 ?>
             </p>
-            <?php if ($login_type == "Admin" && (!empty($start_date) || !empty($end_date))): ?>
-            <p style="margin:5px 0 0 0; font-size:12px; color:#666;">
-                Debug: Start Date = "<?= $start_date ?>", End Date = "<?= $end_date ?>"
-            </p>
-            <?php endif; ?>
         </div>
 
         <?php
@@ -695,20 +691,31 @@ if ($login_type == 'Mitra') {
                                         $display_stars = round($rating_from_db / 2);
                                         $display_stars = max(1, min(5, $display_stars));
                                         ?>
-                                        <p style="margin: 5px 0;">
+                                        <div style="margin: 5px 0;">
                                             <b>Rating:</b>
-                                            <span style="color: #ffb400;"><?= str_repeat('★', $display_stars) . str_repeat('☆', 5 - $display_stars) ?></span>
-                                            (<?= number_format($rating_from_db / 2, 1) ?>/5.0)<br>
+                                            <div class="rating-display">
+                                                <span class="stars" data-rating="<?= $transaksi['rating'] ?>">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <span class="rating-star <?= $i <= $display_stars ? 'filled' : '' ?>">★</span>
+                                                    <?php endfor; ?>
+                                                </span>
+                                                <span class="rating-value"><?= number_format($rating_from_db / 2, 1) ?>/5.0</span>
+                                            </div>
                                             <b>Komentar:</b> <?= htmlspecialchars($transaksi['komentar']) ?: '<i>Tidak ada komentar.</i>' ?><br>
 
                                             <?php if ($login_type == 'Mitra'): ?>
                                                 <?php if(in_array($transaksi['id_transaksi'], $laporan_terkirim)): ?>
                                                     <span class="btn-small disabled" style="margin-top: 5px;">Telah Dilaporkan</span>
                                                 <?php else: ?>
-                                                    <a class="btn-small waves-effect waves-light red modal-trigger" href="#modal-laporan-<?= $transaksi['id_transaksi'] ?>" style="margin-top: 5px;">Laporkan</a>
+                                                    <button class="report-button" 
+                                                            data-transaksi-id="<?= $transaksi['id_transaksi'] ?>" 
+                                                            data-mitra-id="<?= $user_id ?>"
+                                                            style="margin-top: 5px;">
+                                                        <i class="material-icons tiny">report</i> Laporkan
+                                                    </button>
                                                 <?php endif; ?>
                                             <?php endif; ?>
-                                        </p>
+                                        </div>
                                     <?php else: ?>
                                         <p style="margin: 5px 0; font-style: italic;"><?= $transaksi['status_pembayaran'] == 'Lunas' ? 'Belum ada ulasan.' : 'Ulasan dapat diberikan setelah lunas.' ?></p>
                                     <?php endif; ?>
@@ -773,6 +780,7 @@ if ($login_type == 'Mitra') {
 
 <?php include "footer.php"; ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="js/rating.js"></script>
 <script>
     function searchTable() {
         const input = document.getElementById('searchTable');

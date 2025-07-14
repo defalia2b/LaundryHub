@@ -125,3 +125,39 @@ function cekBelumLogin(){
         exit;
     }
 }
+
+// FUNGSI HELPER UNTUK RATING
+
+function getRatingStars($rating, $maxRating = 10) {
+    $rating5 = $rating / 2;
+    $filledStars = round($rating5);
+    $emptyStars = 5 - $filledStars;
+    
+    $stars = '';
+    for ($i = 0; $i < $filledStars; $i++) {
+        $stars .= '<span class="rating-star filled">★</span>';
+    }
+    for ($i = 0; $i < $emptyStars; $i++) {
+        $stars .= '<span class="rating-star">★</span>';
+    }
+    
+    return $stars;
+}
+
+function getRatingText($rating) {
+    $texts = [
+        1 => 'Sangat Buruk',
+        2 => 'Buruk', 
+        3 => 'Cukup',
+        4 => 'Baik',
+        5 => 'Sangat Baik'
+    ];
+    
+    $rating5 = round($rating / 2);
+    return $texts[$rating5] ?? '';
+}
+
+function formatRating($rating, $maxRating = 10) {
+    $rating5 = $rating / 2;
+    return number_format($rating5, 1) . '/5';
+}

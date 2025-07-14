@@ -13,6 +13,43 @@ if (isset($_SESSION["login-mitra"])) { $login_type = "Mitra"; $user_id = $_SESSI
 elseif (isset($_SESSION["login-pelanggan"])) { $login_type = "Pelanggan"; $user_id = $_SESSION["pelanggan"]; }
 elseif (isset($_SESSION["login-admin"])) { header("Location: admin.php"); exit; }
 
+// Backend logic for rating submission (Pelanggan)
+if ($login_type == "Pelanggan" && isset($_POST["submit_rating"])) {
+    $id_transaksi = intval($_POST["id_transaksi"]);
+    $rating = intval($_POST["rating"]);
+    $komentar = htmlspecialchars($_POST["komentar"]);
+    
+    // Validasi rating
+    if ($rating < 1 || $rating > 10) {
+        $_SESSION['pesan_error'] = "Rating harus antara 1-10";
+        header("Location: status.php"); exit;
+    }
+    
+    // Validasi komentar
+    if (empty($komentar)) {
+        $_SESSION['pesan_error'] = "Komentar harus diisi";
+        header("Location: status.php"); exit;
+    }
+    
+    // Validasi bahwa transaksi milik pelanggan ini dan belum di-rating
+    $check_query = mysqli_query($connect, "SELECT id_transaksi FROM transaksi WHERE id_transaksi = $id_transaksi AND id_pelanggan = $user_id AND rating IS NULL");
+    if (mysqli_num_rows($check_query) == 0) {
+        $_SESSION['pesan_error'] = "Transaksi tidak ditemukan atau sudah di-rating";
+        header("Location: status.php"); exit;
+    }
+    
+    // Update rating
+    $update_query = mysqli_query($connect, "UPDATE transaksi SET rating = $rating, komentar = '$komentar' WHERE id_transaksi = $id_transaksi AND id_pelanggan = $user_id");
+    
+    if ($update_query) {
+        $_SESSION['pesan_sukses'] = "Rating berhasil disimpan!";
+    } else {
+        $_SESSION['pesan_error'] = "Gagal menyimpan rating: " . mysqli_error($connect);
+    }
+    
+    header("Location: status.php"); exit;
+}
+
 // Backend logic for Mitra actions (confirm weight, update status)
 if ($login_type == "Mitra") {
     if (isset($_POST["konfirmasi_berat"])) {
@@ -87,6 +124,7 @@ if (isset($_GET['bayar']) && $login_type == "Pelanggan") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include "headtags.html" ?>
     <title>Status Pesanan - <?= $login_type ?></title>
+    <link rel="stylesheet" href="css/rating.css">
     <style> 
         .badge.new { font-weight: 500; border-radius: 8px; }
         .select-wrapper input.select-dropdown {
@@ -115,7 +153,7 @@ if (isset($_GET['bayar']) && $login_type == "Pelanggan") {
             if ($filter_status_pesanan != 'semua') { $where_clauses[] = "p.status_pesanan = '$filter_status_pesanan'"; }
             if ($filter_status_pembayaran != 'semua') { $where_clauses[] = "t.status_pembayaran = '$filter_status_pembayaran'"; }
 
-            $query_str = "SELECT p.*, pl.nama as nama_pelanggan, pl.telp as telp_pelanggan, t.status_pembayaran, t.id_transaksi 
+            $query_str = "SELECT p.*, pl.nama as nama_pelanggan, pl.telp as telp_pelanggan, t.status_pembayaran, t.id_transaksi, t.rating, t.komentar, t.status_ulasan 
                           FROM pesanan p JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan LEFT JOIN transaksi t ON p.id_pesanan = t.id_pesanan";
             if (!empty($where_clauses)) { $query_str .= " WHERE " . implode(' AND ', $where_clauses); }
             $query_str .= " ORDER BY p.tgl_mulai DESC";
@@ -183,6 +221,34 @@ if (isset($_GET['bayar']) && $login_type == "Pelanggan") {
                                     Estimasi: Rp <?= number_format($pesanan['harga_estimasi']) ?>
                                 </p>
                             <?php endif; ?>
+                            
+                            <?php if ($pesanan['id_transaksi'] && $pesanan['rating'] && $pesanan['status_ulasan'] == 'Aktif'): ?>
+                                <div style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                                    <div class="rating-display">
+                                        <span class="stars" data-rating="<?= $pesanan['rating'] ?>">
+                                            <?php for (
+                                                $i = 1; $i <= 5; $i++): ?>
+                                                <span class="rating-star <?= $i <= ($pesanan['rating'] / 2) ? 'filled' : '' ?>">★</span>
+                                            <?php endfor; ?>
+                                        </span>
+                                        <?php
+                                        $rating5 = $pesanan['rating'] / 2;
+                                        $display = ($rating5 == intval($rating5)) ? intval($rating5) : number_format($rating5, 1);
+                                        ?>
+                                        <span class="rating-value"><?= $display ?>/5</span>
+                                    </div>
+                                    <?php if ($pesanan['komentar']): ?>
+                                        <p style="margin: 5px 0 0 0; font-style: italic; color: #555;">
+                                            "<?= htmlspecialchars($pesanan['komentar']) ?>"
+                                        </p>
+                                    <?php endif; ?>
+                                    <button class="report-button" 
+                                            data-transaksi-id="<?= $pesanan['id_transaksi'] ?>" 
+                                            data-mitra-id="<?= $user_id ?>">
+                                        <i class="material-icons tiny">report</i> Laporkan
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -227,7 +293,7 @@ if (isset($_GET['bayar']) && $login_type == "Pelanggan") {
 
 
         <?php elseif ($login_type == "Pelanggan") :
-            $query = mysqli_query($connect, "SELECT p.*, m.nama_laundry, t.id_transaksi, t.status_pembayaran FROM pesanan p JOIN mitra m ON p.id_mitra = m.id_mitra LEFT JOIN transaksi t ON p.id_pesanan = t.id_pesanan WHERE p.id_pelanggan = $user_id ORDER BY p.tgl_mulai DESC");
+            $query = mysqli_query($connect, "SELECT p.*, m.nama_laundry, t.id_transaksi, t.status_pembayaran, t.rating, t.komentar FROM pesanan p JOIN mitra m ON p.id_mitra = m.id_mitra LEFT JOIN transaksi t ON p.id_pesanan = t.id_pesanan WHERE p.id_pelanggan = $user_id ORDER BY p.tgl_mulai DESC");
             if(mysqli_num_rows($query) > 0): while ($pesanan = mysqli_fetch_assoc($query)) :
                 $status_color = ($pesanan['status_pembayaran'] == 'Lunas') ? 'green' : 'blue';
                 ?>
@@ -248,6 +314,66 @@ if (isset($_GET['bayar']) && $login_type == "Pelanggan") {
                                     <?php endif; ?>
                                 </p>
                                 <span class="new badge <?= $status_color ?>" data-badge-caption=""><?= htmlspecialchars($pesanan['status_pesanan']) ?></span>
+                                
+                                <?php if ($pesanan['id_transaksi'] && $pesanan['status_pembayaran'] == 'Lunas'): ?>
+                                    <?php if ($pesanan['rating']): ?>
+                                        <!-- Tampilkan rating yang sudah ada -->
+                                        <div class="rating-display" style="margin-top: 10px;">
+                                            <span class="stars" data-rating="<?= $pesanan['rating'] ?>">
+                                                <?php for (
+                                                    $i = 1; $i <= 5; $i++): ?>
+                                                    <span class="rating-star <?= $i <= ($pesanan['rating'] / 2) ? 'filled' : '' ?>">★</span>
+                                                <?php endfor; ?>
+                                            </span>
+                                            <?php
+                                            $rating5 = $pesanan['rating'] / 2;
+                                            $display = ($rating5 == intval($rating5)) ? intval($rating5) : number_format($rating5, 1);
+                                            ?>
+                                            <span class="rating-value"><?= $display ?>/5</span>
+                                        </div>
+                                        <?php if ($pesanan['komentar']): ?>
+                                            <p class="review-comment">"<?= htmlspecialchars($pesanan['komentar']) ?>"</p>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <!-- Form rating untuk pesanan yang sudah selesai -->
+                                        <div class="rating-form">
+                                            <h6>Berikan Rating untuk Layanan Ini</h6>
+                                            
+                                            <!-- Instruksi yang lebih jelas -->
+                                            <div class="rating-instructions">
+                                                <i class="material-icons tiny">info</i>
+                                                <strong>Petunjuk:</strong> Klik bintang untuk memberikan rating. Semakin banyak bintang, semakin baik rating Anda.
+                                                <br><small>1 bintang = Sangat Buruk, 5 bintang = Sangat Baik</small>
+                                            </div>
+                                            
+                                            <form action="" method="post" id="rating-form-<?= $pesanan['id_transaksi'] ?>">
+                                                <input type="hidden" name="id_transaksi" value="<?= $pesanan['id_transaksi'] ?>">
+                                                <input type="hidden" name="rating" value="0" id="rating-input-<?= $pesanan['id_transaksi'] ?>">
+                                                
+                                                <div class="rating-container">
+                                                    <div class="rating-stars">
+                                                        <?php 
+                                                        $tooltips = ['Sangat Buruk', 'Buruk', 'Cukup', 'Baik', 'Sangat Baik'];
+                                                        for ($i = 1; $i <= 5; $i++): 
+                                                        ?>
+                                                            <span class="rating-star" data-value="<?= $i * 2 ?>" data-tooltip="<?= $tooltips[$i-1] ?>" tabindex="0" role="button" aria-label="Rating <?= $i ?> bintang - <?= $tooltips[$i-1] ?>">★</span>
+                                                        <?php endfor; ?>
+                                                    </div>
+                                                    <span class="rating-text" id="rating-text-<?= $pesanan['id_transaksi'] ?>">Pilih rating</span>
+                                                </div>
+                                                
+                                                <div class="input-field">
+                                                    <textarea name="komentar" id="komentar_<?= $pesanan['id_transaksi'] ?>" class="materialize-textarea" required></textarea>
+                                                    <label for="komentar_<?= $pesanan['id_transaksi'] ?>">Komentar (wajib diisi)</label>
+                                                </div>
+                                                
+                                                <button type="submit" name="submit_rating" class="btn blue waves-effect waves-light" onclick="return validateRatingForm(<?= $pesanan['id_transaksi'] ?>)">
+                                                    <i class="material-icons left">star</i>Kirim Rating
+                                                </button>
+                                            </form>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </div>
                             <div class="col m4 s12 right-align" style="padding-top:10px;">
                                 <?php if ($pesanan['harga_final']) : ?>
@@ -287,6 +413,7 @@ if (isset($_GET['bayar']) && $login_type == "Pelanggan") {
 <?php include "footer.php"; ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="js/script.js"></script>
+<script src="js/rating.js"></script>
 <script>
 function validateForm(orderId) {
     const form = document.getElementById('form-status-' + orderId);
@@ -298,6 +425,30 @@ function validateForm(orderId) {
     }
     
     console.log('Submitting form for order:', orderId, 'with status:', select.value);
+    return true;
+}
+
+// Fungsi untuk validasi form rating
+function validateRatingForm(orderId) {
+    const form = document.getElementById('rating-form-' + orderId);
+    const ratingInput = form.querySelector('input[name="rating"]');
+    const commentInput = form.querySelector('textarea[name="komentar"]');
+    
+    console.log('Validating rating form for order:', orderId);
+    console.log('Rating value:', ratingInput.value);
+    console.log('Comment value:', commentInput.value);
+    
+    if (!ratingInput.value || ratingInput.value == '0') {
+        Swal.fire('Error', 'Silakan berikan rating terlebih dahulu!', 'error');
+        return false;
+    }
+    
+    if (!commentInput.value.trim()) {
+        Swal.fire('Error', 'Silakan berikan komentar!', 'error');
+        return false;
+    }
+    
+    console.log('Rating form is valid, submitting...');
     return true;
 }
 

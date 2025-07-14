@@ -20,12 +20,17 @@ $jumlahHalaman = ceil($jumlahData / $jumlahDataPerHalaman);
 $halamanAktif = $_GET["page"] ?? 1;
 $awalData = ($jumlahDataPerHalaman * $halamanAktif) - $jumlahDataPerHalaman;
 
-// Query untuk mengambil data per halaman
-$query_str = "SELECT * FROM mitra";
+// Query untuk mengambil data per halaman dengan rating
+$query_str = "SELECT m.*, 
+               AVG(t.rating) as avg_rating,
+               COUNT(t.rating) as total_reviews
+               FROM mitra m 
+               LEFT JOIN transaksi t ON m.id_mitra = t.id_mitra AND t.rating IS NOT NULL AND t.status_ulasan = 'Aktif'
+               GROUP BY m.id_mitra";
 if (!empty($keyword)) {
-    $query_str .= " WHERE nama_laundry LIKE '%$keyword%' OR nama_pemilik LIKE '%$keyword%' OR email LIKE '%$keyword%' OR alamat LIKE '%$keyword%'";
+    $query_str .= " HAVING m.nama_laundry LIKE '%$keyword%' OR m.nama_pemilik LIKE '%$keyword%' OR m.email LIKE '%$keyword%' OR m.alamat LIKE '%$keyword%'";
 }
-$query_str .= " ORDER BY id_mitra DESC LIMIT $awalData, $jumlahDataPerHalaman";
+$query_str .= " ORDER BY m.id_mitra DESC LIMIT $awalData, $jumlahDataPerHalaman";
 $mitra_list = mysqli_query($connect, $query_str);
 
 // Hapus data
@@ -43,6 +48,7 @@ if (isset($_GET["hapus"])){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include "headtags.html"; ?>
+    <link rel="stylesheet" href="css/rating.css">
     <title>Kelola Data Mitra</title>
 </head>
 <body>
@@ -74,6 +80,24 @@ if (isset($_GET["hapus"])){
                         <div class="card-content">
                             <span class="card-title activator grey-text text-darken-4"><?= htmlspecialchars($dataMitra['nama_laundry']) ?><i class="material-icons right">more_vert</i></span>
                             <p><?= htmlspecialchars($dataMitra['nama_pemilik']) ?></p>
+                            
+                            <?php if ($dataMitra['avg_rating']): ?>
+                                <div class="rating-display" style="margin-top: 10px;">
+                                    <span class="stars" data-rating="<?= $dataMitra['avg_rating'] ?>">
+                                        <?php 
+                                        $avg_rating_5 = $dataMitra['avg_rating'] / 2;
+                                        $display_stars = round($avg_rating_5);
+                                        for ($i = 1; $i <= 5; $i++): 
+                                        ?>
+                                            <span class="rating-star <?= $i <= $display_stars ? 'filled' : '' ?>">★</span>
+                                        <?php endfor; ?>
+                                    </span>
+                                    <span class="rating-value"><?= number_format($avg_rating_5, 1) ?>/5</span>
+                                    <span style="font-size: 12px; color: #666;">(<?= $dataMitra['total_reviews'] ?> ulasan)</span>
+                                </div>
+                            <?php else: ?>
+                                <p style="color: #999; font-size: 12px; margin-top: 10px;">Belum ada rating</p>
+                            <?php endif; ?>
                         </div>
                         <div class="card-reveal">
                             <span class="card-title grey-text text-darken-4">Detail Info<i class="material-icons right">close</i></span>
@@ -113,5 +137,6 @@ if (isset($_GET["hapus"])){
     </div>
 </main>
 <?php include "footer.php"; ?>
+<script src="js/rating.js"></script>
 </body>
 </html>

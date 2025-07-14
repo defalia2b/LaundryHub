@@ -53,6 +53,11 @@ $is_on_login_page = ($current_page == 'login.php');
                         }
                         ?>
                     </li>
+                    <?php if (isset($_SESSION["login-admin"])): ?>
+                    <li>
+                        <a href='admin-ulasan.php' class='waves-effect waves-light btn orange'>Moderasi Ulasan</a>
+                    </li>
+                    <?php endif; ?>
                     <li>
                         <a href='logout.php' class='waves-effect waves-light btn'>Logout</a>
                     </li>
@@ -83,8 +88,13 @@ $is_on_login_page = ($current_page == 'login.php');
                     } else {
                         echo "<a href='registrasi.php'><i class='material-icons'>person_add</i>Registrasi</a>";
                     }
-                    ?>
+                ?>
                 </li>
+                <?php if (isset($_SESSION["login-admin"])): ?>
+                <li>
+                    <a href='admin-ulasan.php'><i class='material-icons'>rate_review</i>Moderasi Ulasan</a>
+                </li>
+                <?php endif; ?>
                 <li>
                     <?php
                     if (isset($_SESSION["login-pelanggan"]) || isset($_SESSION["login-mitra"]) || isset($_SESSION["login-admin"])) {

@@ -76,6 +76,13 @@ $jumlahTransaksi = mysqli_num_rows(mysqli_query($connect, "SELECT id_transaksi F
                         <p class="light">Tinjau semua transaksi yang terjadi.</p>
                     </a>
                 </div>
+                <div class="col s12 m4">
+                    <a href="admin-ulasan.php" class="card-panel hoverable center-align" style="display: block; color: var(--text-dark);">
+                        <i class="material-icons large" style="color: #ff9800;">rate_review</i>
+                        <h6 class="header">Moderasi Ulasan</h6>
+                        <p class="light">Tinjau laporan ulasan dari mitra.</p>
+                    </a>
+                </div>
             </div>
         </div>
 
