@@ -171,6 +171,16 @@
     color: #ffb400;
 }
 
+/* Prevent all stars from being filled on hover for display-only ratings */
+.rating-display .rating-stars:hover .rating-star {
+    color: inherit;
+}
+
+.rating-display .rating-stars:hover .rating-star:hover,
+.rating-display .rating-stars:hover .rating-star:hover ~ .rating-star {
+    color: inherit;
+}
+
 /* Efek visual yang lebih jelas */
 .rating-star {
     position: relative;

@@ -262,11 +262,14 @@ document.addEventListener('DOMContentLoaded', function() {
     ratingDisplays.forEach(display => {
         const rating = parseInt(display.dataset.rating) || 0;
         const stars = display.querySelectorAll('.rating-star');
-        const filledCount = Math.min(rating, 5);
+        // Convert from 1-10 scale to 1-5 scale for display
+        const filledCount = Math.min(Math.round(rating / 2), 5);
         
         stars.forEach((star, index) => {
             if (index < filledCount) {
                 star.classList.add('filled');
+            } else {
+                star.classList.remove('filled');
             }
         });
     });

@@ -110,7 +110,7 @@ unset($_SESSION['pesan_sukses']);
                 // Logika untuk menampilkan bintang rating
                 $rating_db = (float)$laporan['rating'];
                 $display_stars = round($rating_db / 2);
-                $display_stars = max(1, min(5, $display_stars));
+                $display_stars = max(0, min(5, $display_stars));
                 ?>
                 <div class="card report-card">
                     <div class="card-content">
@@ -132,7 +132,7 @@ unset($_SESSION['pesan_sukses']);
                                             <span class="rating-star <?= $i <= ($display_stars) ? 'filled' : '' ?>">★</span>
                                         <?php endfor; ?>
                                     </span>
-                                    <span class="rating-value"><?= $laporan['rating'] ?>/10</span>
+                                    <span class="rating-value"><?= number_format($laporan['rating'] / 2, 1) ?>/5</span>
                                 </div>
                             </p>
                             <blockquote><?= htmlspecialchars($laporan['komentar']) ?></blockquote>

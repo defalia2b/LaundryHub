@@ -63,12 +63,14 @@ $display_stars_avg = round($rata_rata_rating_5);
             font-weight: 600; 
             font-size: 2.5rem;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            color: white;
         }
         .mitra-header p { 
             margin: 10px 0 0 0; 
             font-size: 1.1rem;
             opacity: 0.9;
             font-weight: 300;
+            color: white;
         }
         .mitra-info, .mitra-ulasan { 
             margin-top: 20px; 

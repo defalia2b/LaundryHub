@@ -84,6 +84,13 @@ if (isset($_GET["hapus"])){
             align-items: center;
             height: 100%;
         }
+        .rating-display .rating-star {
+            font-size: 16px;
+        }
+        .rating-display .stars {
+            display: inline-block;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
