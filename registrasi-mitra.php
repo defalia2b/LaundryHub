@@ -3,17 +3,11 @@ session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-cekLogin();
-
-$pesan_error = $_SESSION['pesan_error'] ?? null;
-unset($_SESSION['pesan_error']);
-
+// Handle registration form submission first, before any HTML output
 if (isset($_POST["daftar"])) {
-
     function registrasi($data)
     {
         global $connect;
-        // ... (Fungsi backend dan validasi tidak diubah, hanya desain frontend)
         $namaLaundry = htmlspecialchars($data["namaLaundry"]);
         $namaPemilik = htmlspecialchars($data["namaPemilik"]);
         $email = htmlspecialchars($data["email"]);
@@ -36,8 +30,16 @@ if (isset($_POST["daftar"])) {
 
         $query = "INSERT INTO mitra (nama_laundry, nama_pemilik, telp, email, alamat, latitude, longitude, foto, password) 
                   VALUES ('$namaLaundry', '$namaPemilik', '$telp', '$email', '$alamat', '$latitude', '$longitude', 'default.png', '$password')";
-        mysqli_query($connect, $query);
-        return mysqli_affected_rows($connect) > 0;
+        
+        if (mysqli_query($connect, $query)) {
+            if (mysqli_affected_rows($connect) > 0) {
+                return true;
+            } else {
+                return "Gagal menyimpan data mitra.";
+            }
+        } else {
+            return "Error database: " . mysqli_error($connect);
+        }
     }
 
     $hasil_registrasi = registrasi($_POST);
@@ -46,19 +48,31 @@ if (isset($_POST["daftar"])) {
         $email = $_POST['email'];
         $query  = "SELECT id_mitra FROM mitra WHERE email = '$email'";
         $result = mysqli_query($connect, $query);
-        $mitra = mysqli_fetch_assoc($result);
-
-        $_SESSION["mitra"] = $mitra["id_mitra"];
-        $_SESSION["login-mitra"] = true;
-        $_SESSION['pesan_sukses'] = "Pendaftaran Mitra Berhasil! Sekarang, silakan atur harga layanan Anda.";
-        header("Location: registrasi-mitra-harga.php");
-        exit;
+        
+        if ($result && $mitra = mysqli_fetch_assoc($result)) {
+            // Set session variables
+            $_SESSION["mitra"] = $mitra["id_mitra"];
+            $_SESSION["login-mitra"] = true;
+            $_SESSION['pesan_sukses'] = "Pendaftaran Mitra Berhasil! Selamat datang di LaundryHub.";
+            
+            // Redirect directly to status page
+            header("Location: status.php");
+            exit();
+        } else {
+            $_SESSION['pesan_error'] = "Gagal mendapatkan ID mitra setelah registrasi.";
+            header("Location: registrasi-mitra.php");
+            exit();
+        }
     } else {
         $_SESSION['pesan_error'] = $hasil_registrasi;
         header("Location: registrasi-mitra.php");
-        exit;
+        exit();
     }
 }
+
+// Get error message if any
+$pesan_error = $_SESSION['pesan_error'] ?? null;
+unset($_SESSION['pesan_error']);
 ?>
 
 <!DOCTYPE html>
@@ -79,7 +93,7 @@ if (isset($_POST["daftar"])) {
             <div class="col s12 m10 l8 offset-m1 offset-l2">
                 <div class="card-panel">
                     <h4 class="header light center">Daftar sebagai Mitra</h4>
-                    <p class="center light">Langkah 1: Isi informasi dasar mengenai usaha laundry Anda.</p>
+                    <p class="center light">Isi informasi dasar mengenai usaha laundry Anda.</p>
                     <form action="" method="post" id="registration-form">
                         <div class="input-field">
                             <i class="material-icons prefix">store</i>
@@ -126,7 +140,7 @@ if (isset($_POST["daftar"])) {
                             <label for="repassword">Konfirmasi Password</label>
                         </div>
                         <div class="center" style="margin-top: 20px;">
-                            <button class='btn-large waves-effect waves-light' type='submit' name='daftar'>Daftar & Lanjut Atur Harga</button>
+                            <button class='btn-large waves-effect waves-light' type='submit' name='daftar'>Daftar sebagai Mitra</button>
                         </div>
                     </form>
                 </div>

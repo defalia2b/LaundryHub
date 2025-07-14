@@ -50,6 +50,41 @@ if (isset($_GET["hapus"])){
     <?php include "headtags.html"; ?>
     <link rel="stylesheet" href="css/rating.css">
     <title>Kelola Data Mitra</title>
+    <style>
+        .mitra-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .mitra-card .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .mitra-card .card-content .card-title {
+            flex-shrink: 0;
+        }
+        .mitra-card .card-content p:first-of-type {
+            flex-shrink: 0;
+        }
+        .rating-section {
+            flex: 1;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+        .rating-display {
+            margin: 0 !important;
+        }
+        .no-rating-text {
+            color: #999;
+            font-size: 12px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
 
@@ -73,7 +108,7 @@ if (isset($_GET["hapus"])){
         <div class="row">
             <?php if(mysqli_num_rows($mitra_list) > 0): foreach ($mitra_list as $dataMitra) : ?>
                 <div class="col s12 m6 l4">
-                    <div class="card">
+                    <div class="card mitra-card">
                         <div class="card-image">
                             <img src="img/mitra/<?= htmlspecialchars($dataMitra['foto']) ?>" style="height: 200px; object-fit: cover;">
                         </div>
@@ -81,23 +116,25 @@ if (isset($_GET["hapus"])){
                             <span class="card-title activator grey-text text-darken-4"><?= htmlspecialchars($dataMitra['nama_laundry']) ?><i class="material-icons right">more_vert</i></span>
                             <p><?= htmlspecialchars($dataMitra['nama_pemilik']) ?></p>
                             
-                            <?php if ($dataMitra['avg_rating']): ?>
-                                <div class="rating-display" style="margin-top: 10px;">
-                                    <span class="stars" data-rating="<?= $dataMitra['avg_rating'] ?>">
-                                        <?php 
-                                        $avg_rating_5 = $dataMitra['avg_rating'] / 2;
-                                        $display_stars = round($avg_rating_5);
-                                        for ($i = 1; $i <= 5; $i++): 
-                                        ?>
-                                            <span class="rating-star <?= $i <= $display_stars ? 'filled' : '' ?>">★</span>
-                                        <?php endfor; ?>
-                                    </span>
-                                    <span class="rating-value"><?= number_format($avg_rating_5, 1) ?>/5</span>
-                                    <span style="font-size: 12px; color: #666;">(<?= $dataMitra['total_reviews'] ?> ulasan)</span>
-                                </div>
-                            <?php else: ?>
-                                <p style="color: #999; font-size: 12px; margin-top: 10px;">Belum ada rating</p>
-                            <?php endif; ?>
+                            <div class="rating-section">
+                                <?php if ($dataMitra['avg_rating']): ?>
+                                    <div class="rating-display">
+                                        <span class="stars" data-rating="<?= $dataMitra['avg_rating'] ?>">
+                                            <?php 
+                                            $avg_rating_5 = $dataMitra['avg_rating'] / 2;
+                                            $display_stars = round($avg_rating_5);
+                                            for ($i = 1; $i <= 5; $i++): 
+                                            ?>
+                                                <span class="rating-star <?= $i <= $display_stars ? 'filled' : '' ?>">★</span>
+                                            <?php endfor; ?>
+                                        </span>
+                                        <span class="rating-value"><?= number_format($avg_rating_5, 1) ?>/5</span>
+                                        <span style="font-size: 12px; color: #666;">(<?= $dataMitra['total_reviews'] ?> ulasan)</span>
+                                    </div>
+                                <?php else: ?>
+                                    <p class="no-rating-text">Belum ada rating</p>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <div class="card-reveal">
                             <span class="card-title grey-text text-darken-4">Detail Info<i class="material-icons right">close</i></span>

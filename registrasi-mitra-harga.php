@@ -3,7 +3,13 @@ session_start();
 include 'connect-db.php';
 include 'functions/functions.php';
 
-cekMitra();
+// Debug: Check session variables
+if (!isset($_SESSION["login-mitra"]) || !isset($_SESSION["mitra"])) {
+    $_SESSION['pesan_error'] = "Session mitra tidak ditemukan. Silakan login kembali.";
+    header("Location: login.php");
+    exit;
+}
+
 $idMitra = $_SESSION["mitra"];
 
 $pesan_sukses_awal = $_SESSION['pesan_sukses'] ?? null;
@@ -28,11 +34,15 @@ if (isset($_POST["submit"])) {
         $query_setrika = "INSERT INTO harga (jenis, id_mitra, harga) VALUES ('setrika', '$idMitra', '$setrika')";
         $query_komplit = "INSERT INTO harga (jenis, id_mitra, harga) VALUES ('komplit', '$idMitra', '$komplit')";
 
-        mysqli_query($connect, $query_cuci);
-        mysqli_query($connect, $query_setrika);
-        mysqli_query($connect, $query_komplit);
+        $result1 = mysqli_query($connect, $query_cuci);
+        $result2 = mysqli_query($connect, $query_setrika);
+        $result3 = mysqli_query($connect, $query_komplit);
 
-        return mysqli_affected_rows($connect) > 0;
+        if ($result1 && $result2 && $result3) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     if (dataHarga($_POST)) {
