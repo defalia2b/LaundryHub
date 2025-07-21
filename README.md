@@ -1,36 +1,36 @@
 # LaundryHub
 
-This project is the Final Project for the Human-Computer Interaction course  
-Informatics Study Program, Faculty of CompSci, Universitas Esa Unggul
+Proyek ini adalah Tugas Akhir untuk mata kuliah Interaksi Manusia dan Komputer
+Program Studi Informatika, Fakultas Ilmu Komputer, Universitas Esa Unggul
 
-## Installation Guide
+## Panduan Instalasi
 
-1. **Download or Clone this Repository**
-    - Use Git:  
+1. **Unduh atau Clone Repository Ini**
+    - Menggunakan Git:
       `git clone https://github.com/yourusername/laundryhub.git`
-    - Or download as ZIP and extract.
+    - Atau unduh sebagai ZIP dan ekstrak.
 
-2. **Create a Database named `laundryhub` (MariaDB/MySQL)**
-    - Using phpMyAdmin:
-        - Open phpMyAdmin
-        - Click "New" and create a database named `laundryhub`
-    - Using terminal/command line:
+2. **Buat Database bernama `laundryhub` (MariaDB/MySQL)**
+    - Menggunakan phpMyAdmin:
+        - Buka phpMyAdmin
+        - Klik "New" dan buat database dengan nama `laundryhub`
+    - Menggunakan terminal/command line:
       ```sql
       CREATE DATABASE laundryhub;
       ```
 
-3. **Import the Database Structure**
-    - Import `laundryhub.sql` into the `laundryhub` database via phpMyAdmin or command line.
+3. **Impor Struktur Database**
+    - Impor file `laundryhub.sql` ke dalam database `laundryhub` melalui phpMyAdmin atau command line.
 
-4. **Configure Database Connection**
-    - Edit `connect-db.php` and set your database username, password, and host if needed.
+4. **Konfigurasi Koneksi Database**
+    - Edit file `connect-db.php` dan atur username, password, serta host database jika diperlukan.
 
-5. **Run the Project**
-    - Place the project folder in your web server directory (e.g., `htdocs` for XAMPP).
-    - Start Apache and MySQL from XAMPP.
-    - Access the project via `http://localhost/laundryhub/` in your browser.
+5. **Jalankan Proyek**
+    - Tempatkan folder proyek di direktori web server (misal, `htdocs` untuk XAMPP).
+    - Jalankan Apache dan MySQL dari XAMPP.
+    - Akses proyek melalui `http://localhost/laundryhub/` di browser.
 
-## Admin Login
+## Login Admin
 
 - **Email:** `admin`
 - **Password:** `admin`
@@ -53,9 +53,9 @@ Informatics Study Program, Faculty of CompSci, Universitas Esa Unggul
 - Mengabaikan laporan yang tidak valid
 - Mengelola moderasi konten
 
-## Troubleshooting
+## Pemecahan Masalah
 
-- If you get a database connection error, check your credentials in `connect-db.php`.
-- Make sure MariaDB/MySQL service is running.
+- Jika mendapatkan error koneksi database, periksa kredensial di `connect-db.php`.
+- Pastikan layanan MariaDB/MySQL sudah berjalan.
 
 ---
